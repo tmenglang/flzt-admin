@@ -107,6 +107,14 @@ export const changeRouter = [
         meta: { title: '货柜状态', affix: false }
       },
       {
+        path: 'trouble',
+        flat: '/device/trouble',
+        show: false,
+        component: () => import('@/views/device/trouble'),
+        name: 'trouble',
+        meta: { title: '故障记录', affix: false },
+      },
+      {
         path: 'configure',
         flat: '/device/configure',
         show: false,
@@ -156,6 +164,68 @@ export const changeRouter = [
         component: () => import('@/views/goods/skutype'),
         name: 'skutype',
         meta: { title: '分类管理',  affix: false }
+      },
+    ]
+  },
+
+  {
+    path: '/ad',
+    component: Layout,
+    redirect: '/ad/material',
+    name: 'material',
+    show: false,
+    meta: { title: '广告管理', icon: 'form' },
+    children: [
+      {
+        path: 'material',
+        flat: '/ad/material',
+        show: false,
+        component: () => import('@/views/ad/material'),
+        name: 'material',
+        meta: { title: '广告创意',  affix: false }
+      },
+      {
+        path: 'ad',
+        flat: '/ad/sku',
+        show: false,
+        component: () => import('@/views/ad/ad'),
+        name: 'ad',
+        meta: { title: '广告计划',  affix: false }
+      }
+    ]
+  },
+
+  {
+    path: '/data',
+    component: Layout,
+    redirect: '/data/datagoods',
+    name: 'datagoods',
+    show: false,
+    meta: { title: '数据管理', icon: 'form' },
+    children: [
+      {
+        path: 'datagoods',
+        flat: '/data/datagoods',
+        show: false,
+        component: () => import('@/views/data/datagoods'),
+        name: 'datagoods',
+        meta: { title: '商品销售数据',  affix: false }
+      },
+      {
+        path: 'datadevice',
+        flat: '/data/datadevice',
+        show: false,
+        component: () => import('@/views/data/datadevice'),
+        name: 'datadevice',
+        meta: { title: '设备销售数据',  affix: false }
+      },
+      {
+        path: 'datacompany',
+        flat: '/data/datacompany',
+        show: false,
+        component: () => import('@/views/data/datacompany'),
+        name: 'datacompany',
+        meta: { title: '商家销售数据',  affix: false }
       },
     ]
   },
@@ -218,6 +288,24 @@ export const changeRouter = [
         component: () => import('@/views/order/error'),
         name: 'error',
         meta: { title: '异常订单',  affix: false }
+      }
+    ]
+  },
+  {
+    path: '/finance',
+    component: Layout,
+    show: false,
+    redirect: '/finance/shareorder',
+    name: 'shareorder',
+    meta: { title: '财务管理', icon: 'link' },
+    children: [
+      {
+        path: 'shareorder',
+        flat: '/finance/shareorder',
+        show: false,
+        component: () => import('@/views/finance/shareorder'),
+        name: 'shareorder',
+        meta: { title: '分账管理',  affix: false }
       }
     ]
   },

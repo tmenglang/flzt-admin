@@ -1,13 +1,12 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="searchQuery.name" placeholder="商品名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="searchQuery.name" placeholder="素材名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       
-      <el-select v-model="searchQuery.device_type" placeholder="设备类型" clearable style="width: 120px" class="filter-item">
-        <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
+      <el-select v-model="searchQuery.type" placeholder="素材类型" clearable style="width: 120px" class="filter-item">
+        <el-option v-for="item in type_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
-      <el-select v-model="searchQuery.state" placeholder="商品状态" clearable style="width: 120px" class="filter-item">
+      <el-select v-model="searchQuery.state" placeholder="素材状态" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-button class="filter-item" type="primary" @click="handleFilter">
@@ -29,78 +28,62 @@
       border  
       style="width: 100%; margin-top: 20px;">
       <el-table-column
-        prop="id" 
-        label="SKUID">
-      </el-table-column>
-      <el-table-column
-        prop="name" 
-        label="商品名称">
-      </el-table-column>
-      <el-table-column
-        prop="pic1" 
-        label="商品图片">
+        prop="url" 
+        label="素材">
         <template slot-scope="scope">
           <!-- <img :src="scope.row.pic1" class="img" /> -->
           <el-image 
             style="width: 50px; height: 50px"
-            :src="scope.row.pic1" 
+            :src="scope.row.url" 
             :preview-src-list="scope.row.srcList">
           </el-image>
         </template>
       </el-table-column>
-      <!-- <el-table-column
-        prop="pic2" 
-        label="陈列图片">
-        <template slot-scope="scope">
-          <img :src="scope.row.pic2" class="img" />
-        </template>
-      </el-table-column> -->
       <el-table-column
-        prop="sku_type_name" 
-        label="一级分类">
-        <!-- <template slot-scope="scope">
-          <span>{{ sku_type[scope.row.sku_type] }}</span>
-        </template> -->
+        prop="name" 
+        label="素材名称">
       </el-table-column>
       <el-table-column
-        prop="sku_child_type_name" 
-        label="二级分类">
-      </el-table-column>
-      <el-table-column
-        prop="device_type" 
-        label="设备类型">
+        prop="type" 
+        label="素材类型">
         <template slot-scope="scope">
-          <span>{{ device_type[scope.row.device_type] }}</span>
+          <span>{{ type[scope.row.type] }}</span>
         </template>
       </el-table-column>
       <el-table-column
-        prop="bar_code" 
-        label="条形码">
+        prop="channel" 
+        label="投放渠道">
       </el-table-column>
       <el-table-column
-        prop="label" 
-        label="模型标识">
-      </el-table-column>
-      <el-table-column
-        prop="create_operator" 
-        label="创建人">
+        prop="state" 
+        label="状态">
+        <template slot-scope="scope">
+          <span>{{ state[scope.row.state] }}</span>
+        </template>
       </el-table-column>
       <el-table-column
         prop="create_time" 
         label="创建时间">
       </el-table-column>
       <el-table-column
-        prop="stete" 
-        label="状态">
-        <template slot-scope="scope">
-          <span>{{ state[scope.row.state] }}</span>
-        </template>
+        prop="create_operator" 
+        label="创建人">
+      </el-table-column>
+      <el-table-column
+        prop="company_name" 
+        label="公司名字">
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
           <el-button
             size="mini"
-            @click="handleUpdate(scope.row)" :disabled="scope.row.state == 1">加入我的商品</el-button>
+            @click="handleUpdate(scope.row)">查看</el-button>
+          <el-button
+            size="mini"
+            @click="handleUpdate(scope.row)">通过</el-button>
+          <el-button
+            size="mini"
+            @click="handleUpdate(scope.row)">驳回</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -110,13 +93,23 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 80%; margin-left:50px;">
-        <el-form-item label="商品名称" prop="name">
-          <el-input v-model="temp.name" placeholder="请输入商品名称" />
+        <el-form-item label="素材名称" prop="name">
+          <el-input v-model="temp.name" placeholder="请输入素材名称" />
         </el-form-item>
-        <el-form-item label="条形码" prop="bar_code">
-          <el-input v-model="temp.bar_code" placeholder="请输入商品名称" />
+        <el-form-item label="素材类型" prop="type">
+          <el-select v-model="temp.type" class="filter-item" placeholder="请选择" @change="changeChild(temp.type)">
+            <el-option v-for="item in type_format" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="商品图片">
+        <el-form-item label="投放位置" prop="channel">
+          <el-radio-group v-model="temp.channel">
+            <el-radio :label="1">小程序-banner</el-radio>
+            <el-radio :label="2">小程序-首页展示</el-radio>
+            <el-radio :label="3">小程序-开门页面展示</el-radio>
+            <el-radio :label="4">小程序-关门页面展示</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="素材">
           <el-upload
             action="https://portal.fsylit.com/file/upload"
             list-type="picture-card" 
@@ -129,37 +122,6 @@
           <el-dialog :visible.sync="dialogVisible">
             <img width="100%" :src="dialogImageUrl" alt="">
           </el-dialog>
-        </el-form-item>
-        <el-form-item label="一级分类" prop="sku_type">
-          <el-select v-model="temp.sku_type" class="filter-item" placeholder="请选择" @change="changeChild(temp.sku_type)">
-            <el-option v-for="item in sku_type_format" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="二级分类" prop="sku_child_type">
-          <el-select v-model="temp.sku_child_type" class="filter-item" placeholder="请选择">
-            <el-option v-for="item in sku_child_format" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="设备类型" prop="device_type">
-          <el-select v-model="temp.device_type" class="filter-item" placeholder="请选择">
-            <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="模型标识" prop="label">
-          <el-input v-model="temp.label" placeholder="请输入模型标识" />
-        </el-form-item>
-        <el-form-item label="商品支持设备类型" prop="device_type">
-          <el-checkbox-group v-model="temp.device_type">
-            <el-checkbox v-for="(item, index) in device_type_format" :key="index" :label="item.label" :value="item.value"></el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="商品支持层次" prop="layer">
-          <el-select v-model="temp.layer" class="filter-item" placeholder="请选择">
-            <el-option v-for="item in layer_format" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="建议零售价" prop="price">
-          <el-input v-model="temp2.price" placeholder="请输入零售价" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -198,10 +160,10 @@
 </template>
 
 <script>
-import { skuSelect, skuList, skuUpdate, goodsUpdate, skutypeList } from '@/api/goods'
+import { materialList, materialUpdate } from '@/api/material'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Sku',
+  name: 'Material',
   components: { Pagination },
   data() {
     return {
@@ -219,29 +181,22 @@ export default {
       },
       searchQuery: {
         name: '',
-        id: '',
-        state: '',
-        device_type: ''
+        type: '',
+        state: ''
       },
-      state: ["未加入", "已加入"],
-      state_format: [{label: '未加入', value: 0}, {label: '已加入', value: 1}],
-      device_type: [],
-      sku_type: [],
-      device_type_format: [],
-      sku_type_format: [],
-      sku_child_format: [],
-      layer_format: [{label: '全部层支持', value: 0}, {label: '仅支持第一层', value: 1}, {label: '第一层除外', value: 2}],
+      state: ["待审批", "已驳回", "已审批"],
+      state_format: [{label: '待审批', value: 0}, {label: '已驳回', value: 1}, {label: '已审批', value: 2}],
+      type: {
+          0: '图片',
+          1: '视频'
+      },
+      type_format: [{label: '图片', value: 0}, {label: '视频', value: 1}],
       temp: {
-        //id: undefined,
+        id: undefined,
         name: '',
-        pic1: '',
-        pic2: '',
-        pic3: '',
-        sku_type: '',
-        sku_child_type: '',
-        bar_code: '',
-        label: '',
-        device_type: ''
+        type: '',
+        channel: '',
+        url: ''
       },
       temp2: {
         sku_id: '',
@@ -251,16 +206,13 @@ export default {
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
-        update: '编辑商品',
-        create: '新增商品'
+        update: '编辑素材',
+        create: '新增素材'
       },
       dialogPvVisible: false,
       rules: {
         name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
-        bar_code: [{ required: true, message: '请输入条形码', trigger: 'blur' }],
-        sku_type: [{ required: true, message: '请选择商品一级分类', trigger: 'change' }],
-        sku_child_type: [{ required: true, message: '请选择商品二级分类', trigger: 'change' }],
-        device_type: [{ required: true, message: '请选择类型', trigger: 'change' }]
+        type: [{ required: true, message: '请输入条形码', trigger: 'blur' }]
       },
       add_rules: {
         cost: [{ required: true, message: '请输入成本价', trigger: 'blur' }],
@@ -274,51 +226,14 @@ export default {
     }
   },
   created() {
-    this.getSelect();
+    this.getList();
   },
   methods: {
-    getSelect() {
-      skuSelect({}).then(res => {
-        let d = [];
-        let s = [];
-        for (var i in res.data.device_type) {
-          d.push({label: res.data.device_type[i], value: i});
-        }
-        this.device_type_format = d;
-        this.device_type = res.data.device_type;
-        this.getskuType()
-        
-      });
-    },
-    getskuType() {
-      skutypeList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let s = [];
-        let c = [];
-        let list = res.data.list;
-        this.sku_type = list;
-        for (var i in list) {
-          s.push({label: list[i].name, value: list[i].id});
-        }
-        this.sku_type_format = s;
-        if (list[0].child_list.length) {
-          list[0].child_list.forEach(v => {
-            c.push({label: v.name, value: v.id});
-          });
-        }
-        this.sku_child_format = c;
-        this.getList()
-      });
-    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
       data.search = JSON.stringify(this.searchQuery);
-      skuList(data).then(res => {
+      materialList(data).then(res => {
         this.listLoading = false;
         let list = res.data.list;
         if (list.length) {
@@ -335,16 +250,11 @@ export default {
     },
     resetTemp() {
       this.temp = {
-        //id: undefined,
+        id: undefined,
         name: '',
-        pic1: '',
-        pic2: '',
-        pic3: '',
-        sku_type: '',
-        sku_child_type: '',
-        bar_code: '',
-        label: '',
-        device_type: ''
+        type: '',
+        channel: '',
+        url: ''
       }
     },
     resetTemp2() {
@@ -441,9 +351,8 @@ export default {
       };
       this.searchQuery = {
         name: '',
-        id: '',
-        state: '',
-        device_type: ''
+        type: '',
+        state: ''
       }
       this.getList()
     },

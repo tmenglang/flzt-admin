@@ -197,6 +197,7 @@
             class="vm" 
             v-model="temp.use_start_time"
             type="date"
+            value-format="yyyy-MM-dd"
             placeholder="开始时间">
           </el-date-picker> 至
           <el-date-picker
@@ -204,6 +205,7 @@
             class="vm" 
             v-model="temp.use_end_time"
             type="date"
+            value-format="yyyy-MM-dd"
             placeholder="结束时间">
           </el-date-picker>
         </el-form-item>

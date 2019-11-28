@@ -1,9 +1,8 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.device_code" placeholder="货柜名称/货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="searchQuery.device_state" placeholder="消息状态" clearable style="width: 120px" class="filter-item">
-        <el-option v-for="item in device_state_format" :key="item.value" :label="item.label" :value="item.value" />
+      <el-select v-model="searchQuery.error_type" placeholder="请选择故障类型" clearable style="width: 150px" class="filter-item">
+        <el-option v-for="item in error_type_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-date-picker
         style="width: 150px" 
@@ -11,7 +10,7 @@
         v-model="searchQuery.start_time"
         type="date"
         value-format="yyyy-MM-dd"
-        placeholder="开始时间">
+        placeholder="上报开始时间">
       </el-date-picker>
       <el-date-picker
         style="width: 150px" 
@@ -19,7 +18,7 @@
         v-model="searchQuery.end_time"
         type="date"
         value-format="yyyy-MM-dd"
-        placeholder="结束时间">
+        placeholder="上报结束时间">
       </el-date-picker>
       
       <el-button class="filter-item" type="primary" @click="handleFilter">
@@ -31,9 +30,6 @@
       <el-button :loading="downloadLoading" class="filter-item" type="default" @click="handleDownload">
         导出
       </el-button>
-      <!-- <el-button class="filter-item" style="margin-left: 10px; float: right;" type="primary" icon="el-icon-edit" @click="handleCreate">
-        新增
-      </el-button> -->
     </div>
     <el-table
       :data="tableData"
@@ -41,46 +37,27 @@
       v-loading="listLoading" 
       style="width: 100%; margin-top: 20px;">
       <el-table-column
-        prop="device_code" 
-        label="货柜编号">
+        prop="create_time" 
+        label="上报时间">
       </el-table-column>
       <el-table-column
-        prop="device_name" 
-        label="货柜名称">
+        prop="error_time" 
+        label="故障时长（s）">
       </el-table-column>
       <el-table-column
-        prop="comapny_name" 
-        label="所属商家">
-      </el-table-column>
-      <el-table-column
-        prop="send_type" 
-        label="上报/下发类型">
-      </el-table-column>
-      <el-table-column
-        prop="msg_type" 
-        label="消息类型">
-      </el-table-column>
-      <el-table-column
-        prop="device_state" 
-        label="消息状态">
+        prop="error_type" 
+        label="故障类型">
         <template slot-scope="scope">
-          <span>{{ device_state[scope.row.device_state] }}</span>
+          <span>{{ error_type[scope.row.error_type] }}</span>
         </template>
       </el-table-column>
       <el-table-column
         prop="error" 
-        label="异常原因">
+        label="故障信息">
       </el-table-column>
       <el-table-column
-        prop="create_time" 
-        label="时间">
-      </el-table-column>
-      <el-table-column label="操作">
-        <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">详情</el-button>
-        </template>
+        prop="details" 
+        label="故障详情">
       </el-table-column>
     </el-table>
     <div class="pages-wrap">
@@ -96,14 +73,13 @@
 </template>
 
 <script>
-import { deviceLog } from '@/api/device'
+import { deviceError } from '@/api/device'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Log',
+  name: 'Trouble',
   components: { Pagination },
   data() {
     return {
-      selectLoading: false,
       btnLoading: false,
       tableData: [],
       tableKey: 0,
@@ -117,31 +93,21 @@ export default {
         order_type: 'desc'
       },
       searchQuery: {
-        device_code: '',
-        device_state: '',
+        error_type: '',
         start_time: '',
         end_time: ''
       },
-      device_state: {
-        1: '正常',
-        0: '异常'
+      error_type: {
+        1: '故障类型1',
+        2: '故障类型2'
       },
-      device_state_format: [{value: 1, label: '正常'}, {value: 0, label: '异常'}],
+      error_type_format: [{value: 1, label: '故障类型1'}, {value: 2, label: '故障类型2'}],
       temp: {
-        id: undefined,
-        company_id: '',
-        device_name: '',
-        device_type: '',
-        device_model: '',
-        device_state: '',
-        location: '',
-        is_online: '',
-        pay_type: ''
       },
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
-        update: '日志详情'
+        update: '故障详情'
       }
     }
   },
@@ -153,7 +119,7 @@ export default {
       this.listLoading = true;
       let data = this.listQuery;
       data.search = JSON.stringify(this.searchQuery);
-      deviceLog(data).then(res => {
+      deviceError(data).then(res => {
         this.listLoading = false;
         this.tableData = res.data.list;
         this.total = res.data.total;

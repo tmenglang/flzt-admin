@@ -26,6 +26,7 @@
                     class="vm" 
                     v-model="searchQuery.start_time"
                     type="date"
+                    value-format="yyyy-MM-dd"
                     placeholder="异常开始时间">
                 </el-date-picker>
                 <el-date-picker
@@ -33,6 +34,7 @@
                     class="vm" 
                     v-model="searchQuery.end_time"
                     type="date"
+                    value-format="yyyy-MM-dd"
                     placeholder="异常结束时间">
                 </el-date-picker>
           </div>

@@ -23,6 +23,7 @@
         class="vm" 
         v-model="searchQuery.start_time"
         type="date"
+        value-format="yyyy-MM-dd"
         placeholder="开始时间">
       </el-date-picker>
       <el-date-picker
@@ -30,6 +31,7 @@
         class="vm" 
         v-model="searchQuery.end_time"
         type="date"
+        value-format="yyyy-MM-dd"
         placeholder="结束时间">
       </el-date-picker>
       
@@ -82,6 +84,7 @@
     <div class="pages-wrap">
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
+    
     <el-dialog title="日志详情" :visible.sync="dialogDetailVisible">
       <div class="log-detail">
         <p>设备号：{{detail.device_code}}</p>
@@ -106,8 +109,62 @@
         <el-button type="primary" @click="dialogDetailVisible = false">确 定</el-button>
       </span>
     </el-dialog>
+    <el-dialog title="选择货柜" :visible.sync="dialogTableVisible">
+      <el-row>
+        <el-col :span="12"><div><el-button type="primary" plain style="margin-right: 20px;" @click="selectDeviceAll()">全选</el-button>已选 {{selectedAmount}} </div></el-col>
+        <el-col :span="12"><div style="text-align: right;"><el-input v-model="deviceSearchQuery.device_code" placeholder="货柜编号" style="width: 300px;" /><el-button type="primary" @click="getDeviceList()">确 定</el-button></div></el-col>
+      </el-row>
+      <el-table
+        :data="deviceData"
+        border  
+        v-loading="deviceLoading" 
+        @selection-change="handleSelectionChange" 
+        style="width: 100%; margin-top: 20px;">
+        <el-table-column
+          type="selection"
+          width="55">
+        </el-table-column>
+        <el-table-column
+          prop="device_code" 
+          label="货柜编号">
+        </el-table-column>
+        <el-table-column
+          prop="device_name" 
+          label="货柜名称">
+        </el-table-column>
+        <el-table-column
+          prop="company_name" 
+          label="所属公司">
+        </el-table-column>
+      </el-table>
+      <el-row>
+        <el-col :span="24">
+          <pagination class="fr" v-show="device_total>0" :total="device_total" :page.sync="deviceQuery.page_index" :limit.sync="deviceQuery.page_size" @pagination="getDeviceList" />
+        </el-col>
+      </el-row>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogTableVisible = false">
+          取消
+        </el-button>
+        <el-button type="primary" @click="selectDevice()">
+          保存
+        </el-button>
+      </div>
+    </el-dialog>
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 80%; margin-left:50px;">
+        <el-form-item label="选择货柜" prop="device_code">
+          <el-button type="primary" @click="openDeviceList()">请选择货柜</el-button>
+          <el-input
+            type="textarea"
+            :rows="2"
+            class="text-area" 
+            placeholder="请选择货柜"
+            disabled
+            v-model="temp.device_code">
+          </el-input>
+        </el-form-item>
+        <el-divider content-position="left">参数配置</el-divider>
         <el-form-item label="接口ip" prop="netIp">
           <el-input v-model="temp.netIp" placeholder="请输入接口ip" />
         </el-form-item>
@@ -169,7 +226,7 @@
 </template>
 
 <script>
-import { deviceConf } from '@/api/device'
+import { deviceConf, deviceList } from '@/api/device'
 import { merchantList } from '@/api/merchant'
 import Pagination from '@/components/Pagination'
 export default {
@@ -184,6 +241,7 @@ export default {
       total: 0,
       downloadLoading: false,
       listLoading: true,
+      dialogTableVisible: false,
       listQuery: {
         page_size: 20,
         page_index: 1,
@@ -196,6 +254,21 @@ export default {
         start_time: '',
         end_time: ''
       },
+      deviceData: [],
+      selectedAmount: 0,
+      deviceKey: 0,
+      device_total: 0,
+      deviceLoading: true,
+      deviceQuery: {
+        page_size: 10,
+        page_index: 1,
+        order_by: '',
+        order_type: 'desc'
+      },
+      deviceSearchQuery: {
+        device_code: ''
+      },
+      multipleSelection: [],
       options: [],
       detail: {},
       deviceIsError: [{value: 0, label: '无效'}, {value: 1, label: '有效'}],
@@ -225,13 +298,7 @@ export default {
       },
       dialogPvVisible: false,
       rules: {
-        device_name: [{ required: true, message: '请输入货柜名称', trigger: 'blur' }],
-        company_id: [{ required: true, message: '抢选择所属商家', trigger: 'change' }],
-        device_type: [{ required: true, message: '请选择设备类型', trigger: 'change' }],
-        device_model: [{ required: true, message: '请选择设备型号', trigger: 'change' }],
-        device_state: [{ required: true, message: '请选择设备状态', trigger: 'change' }],
-        is_online: [{ required: true, message: '请选择是否在线', trigger: 'change' }],
-        pay_type: [{ required: true, message: '请选择付款方式', trigger: 'change' }]
+        device_code: [{ required: true, message: '请选择货柜' }]
       },
       qrcode: null,
       centerDialogVisible: false,
@@ -242,6 +309,28 @@ export default {
     this.getList();
   },
   methods: {
+    openDeviceList() {
+      this.dialogTableVisible = true;
+      this.getDeviceList();
+    },
+    getDeviceList() {
+      this.deviceLoading = true;
+      let data = this.deviceQuery;
+      data.search = JSON.stringify(this.deviceSearchQuery);
+      deviceList(data).then(res => {
+        this.deviceLoading = false;
+        this.deviceData = res.data.list;
+        this.device_total = res.data.total;
+      });
+    },
+    selectDeviceAll() {
+      this.selectedAmount = this.device_total;
+    },
+    selectDevice() {},
+    handleSelectionChange(val) {
+      this.multipleSelection = val;
+      this.selectedAmount = val.length;
+    },
     remoteMethod(query) {
       if (query !== '') {
         this.selectLoading = true;
@@ -446,5 +535,9 @@ export default {
     border: 1px solid #ccc;
     padding: 20px;
     margin: 20px auto;
+  }
+
+  .text-area .el-textarea__inner{
+    margin-top: 10px;
   }
 </style>

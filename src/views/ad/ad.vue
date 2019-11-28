@@ -1,15 +1,29 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="searchQuery.name" placeholder="商品名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      
-      <el-select v-model="searchQuery.device_type" placeholder="设备类型" clearable style="width: 120px" class="filter-item">
-        <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
+      <el-input v-model="searchQuery.ad_name" placeholder="广告名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-select v-model="searchQuery.channel" placeholder="投放位置" clearable style="width: 150px" class="filter-item">
+        <el-option v-for="item in channel_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
-      <el-select v-model="searchQuery.state" placeholder="商品状态" clearable style="width: 120px" class="filter-item">
+      <el-select v-model="searchQuery.state" placeholder="投放状态" clearable style="width: 150px" class="filter-item">
         <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
+      <el-date-picker
+        style="width: 150px" 
+        class="vm" 
+        v-model="searchQuery.start_time"
+        type="date"
+        value-format="yyyy-MM-dd"
+        placeholder="开始时间">
+      </el-date-picker>
+      <el-date-picker
+        style="width: 150px" 
+        class="vm" 
+        v-model="searchQuery.end_time"
+        type="date"
+        value-format="yyyy-MM-dd"
+        placeholder="结束时间">
+      </el-date-picker>
       <el-button class="filter-item" type="primary" @click="handleFilter">
         筛选
       </el-button>
@@ -29,78 +43,58 @@
       border  
       style="width: 100%; margin-top: 20px;">
       <el-table-column
-        prop="id" 
-        label="SKUID">
+        prop="ad_name" 
+        label="广告名称">
       </el-table-column>
       <el-table-column
-        prop="name" 
-        label="商品名称">
+        prop="material_num" 
+        label="素材数量">
       </el-table-column>
       <el-table-column
-        prop="pic1" 
-        label="商品图片">
+        prop="material_size" 
+        label="素材大小">
+      </el-table-column>
+      <el-table-column
+        prop="channel" 
+        label="投放渠道">
         <template slot-scope="scope">
-          <!-- <img :src="scope.row.pic1" class="img" /> -->
-          <el-image 
-            style="width: 50px; height: 50px"
-            :src="scope.row.pic1" 
-            :preview-src-list="scope.row.srcList">
-          </el-image>
-        </template>
-      </el-table-column>
-      <!-- <el-table-column
-        prop="pic2" 
-        label="陈列图片">
-        <template slot-scope="scope">
-          <img :src="scope.row.pic2" class="img" />
-        </template>
-      </el-table-column> -->
-      <el-table-column
-        prop="sku_type_name" 
-        label="一级分类">
-        <!-- <template slot-scope="scope">
-          <span>{{ sku_type[scope.row.sku_type] }}</span>
-        </template> -->
-      </el-table-column>
-      <el-table-column
-        prop="sku_child_type_name" 
-        label="二级分类">
-      </el-table-column>
-      <el-table-column
-        prop="device_type" 
-        label="设备类型">
-        <template slot-scope="scope">
-          <span>{{ device_type[scope.row.device_type] }}</span>
+          <span>{{ channel[scope.row.channel] }}</span>
         </template>
       </el-table-column>
       <el-table-column
-        prop="bar_code" 
-        label="条形码">
+        prop="start_time" 
+        label="开始时间">
       </el-table-column>
       <el-table-column
-        prop="label" 
-        label="模型标识">
+        prop="end_time" 
+        label="结束时间">
+      </el-table-column>
+      <el-table-column
+        prop="state" 
+        label="状态">
+        <template slot-scope="scope">
+          <span>{{ state[scope.row.state] }}</span>
+        </template>
       </el-table-column>
       <el-table-column
         prop="create_operator" 
         label="创建人">
       </el-table-column>
       <el-table-column
-        prop="create_time" 
-        label="创建时间">
-      </el-table-column>
-      <el-table-column
-        prop="stete" 
-        label="状态">
-        <template slot-scope="scope">
-          <span>{{ state[scope.row.state] }}</span>
-        </template>
+        prop="company_name" 
+        label="所属商家">
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
           <el-button
             size="mini"
-            @click="handleUpdate(scope.row)" :disabled="scope.row.state == 1">加入我的商品</el-button>
+            @click="handleUpdate(scope.row)">查看</el-button>
+          <el-button
+            size="mini"
+            @click="handleUpdate(scope.row)">编辑</el-button>
+          <el-button
+            size="mini"
+            @click="handleUpdate(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -110,57 +104,67 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 80%; margin-left:50px;">
-        <el-form-item label="商品名称" prop="name">
-          <el-input v-model="temp.name" placeholder="请输入商品名称" />
+        <el-divider content-position="left">基本信息</el-divider>
+        <el-form-item label="素材名称" prop="ad_name">
+          <el-input v-model="temp.ad_name" placeholder="请输入素材名称" />
         </el-form-item>
-        <el-form-item label="条形码" prop="bar_code">
-          <el-input v-model="temp.bar_code" placeholder="请输入商品名称" />
+        <el-form-item label="素材名称" prop="start_time">
+          <el-date-picker
+            v-model="temp.start_time"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期">
+          </el-date-picker>
         </el-form-item>
-        <el-form-item label="商品图片">
-          <el-upload
-            action="https://portal.fsylit.com/file/upload"
-            list-type="picture-card" 
-            :on-preview="handlePictureCardPreview"
-            :on-success="handlePicSuccess" 
-            accept=".jpg,.jpeg,.png,.bmp,.JPG,.JPEG,.BMP" 
-            :on-remove="handleRemove">
-            <i class="el-icon-plus"></i>
-          </el-upload>
-          <el-dialog :visible.sync="dialogVisible">
-            <img width="100%" :src="dialogImageUrl" alt="">
-          </el-dialog>
+        <el-form-item label="广告播放间隔" prop="pic_show_time">
+          <el-input v-model="temp.pic_show_time" placeholder="" />
         </el-form-item>
-        <el-form-item label="一级分类" prop="sku_type">
-          <el-select v-model="temp.sku_type" class="filter-item" placeholder="请选择" @change="changeChild(temp.sku_type)">
-            <el-option v-for="item in sku_type_format" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
+        <el-divider content-position="left">投放信息</el-divider>
+        <el-form-item label="投放位置" prop="channel">
+          <el-radio-group v-model="temp.channel">
+            <el-radio :label="1">小程序-banner</el-radio>
+            <el-radio :label="2">小程序-首页展示</el-radio>
+            <el-radio :label="3">小程序-开门页面展示</el-radio>
+            <el-radio :label="4">小程序-关门页面展示</el-radio>
+          </el-radio-group>
         </el-form-item>
-        <el-form-item label="二级分类" prop="sku_child_type">
-          <el-select v-model="temp.sku_child_type" class="filter-item" placeholder="请选择">
-            <el-option v-for="item in sku_child_format" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
+        <el-form-item label="选择素材">
+          <el-transfer v-model="temp.material_ids" :data="materialList"></el-transfer>
         </el-form-item>
-        <el-form-item label="设备类型" prop="device_type">
-          <el-select v-model="temp.device_type" class="filter-item" placeholder="请选择">
-            <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="模型标识" prop="label">
-          <el-input v-model="temp.label" placeholder="请输入模型标识" />
-        </el-form-item>
-        <el-form-item label="商品支持设备类型" prop="device_type">
-          <el-checkbox-group v-model="temp.device_type">
-            <el-checkbox v-for="(item, index) in device_type_format" :key="index" :label="item.label" :value="item.value"></el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="商品支持层次" prop="layer">
-          <el-select v-model="temp.layer" class="filter-item" placeholder="请选择">
-            <el-option v-for="item in layer_format" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="建议零售价" prop="price">
-          <el-input v-model="temp2.price" placeholder="请输入零售价" />
-        </el-form-item>
+        <el-divider content-position="left">选择投放设备</el-divider>
+        <el-row>
+          <el-col :span="6"><div><el-button type="primary" plain style="margin-right: 20px;" @click="selectDeviceAll()">全选</el-button>已选 {{selectedAmount}} </div></el-col>
+          <el-col :span="18"><div style="text-align: right;"><el-input v-model="deviceSearchQuery.device_code" placeholder="货柜编号" style="width: 300px;" /><el-button type="primary" @click="getDeviceList()">确 定</el-button></div></el-col>
+        </el-row>
+        <el-table
+          :data="deviceData"
+          border  
+          v-loading="deviceLoading" 
+          @selection-change="handleSelectionChange" 
+          style="width: 100%; margin-top: 20px;">
+          <el-table-column
+            type="selection"
+            width="55">
+          </el-table-column>
+          <el-table-column
+            prop="device_code" 
+            label="货柜编号">
+          </el-table-column>
+          <el-table-column
+            prop="device_name" 
+            label="货柜名称">
+          </el-table-column>
+          <el-table-column
+            prop="company_name" 
+            label="所属公司">
+          </el-table-column>
+        </el-table>
+        <el-row>
+          <el-col :span="24">
+            <pagination class="fr" v-show="device_total>0" :total="device_total" :page.sync="deviceQuery.page_index" :limit.sync="deviceQuery.page_size" @pagination="getDeviceList" />
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">
@@ -198,10 +202,11 @@
 </template>
 
 <script>
-import { skuSelect, skuList, skuUpdate, goodsUpdate, skutypeList } from '@/api/goods'
+import { adList, adUpdate, materialList } from '@/api/material'
+import { deviceList } from '@/api/device'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Sku',
+  name: 'Ad',
   components: { Pagination },
   data() {
     return {
@@ -218,30 +223,27 @@ export default {
         order_type: 'desc'
       },
       searchQuery: {
-        name: '',
-        id: '',
+        ad_name: '',
+        channel: '',
         state: '',
-        device_type: ''
+        start_time: '',
+        end_time: ''
       },
-      state: ["未加入", "已加入"],
-      state_format: [{label: '未加入', value: 0}, {label: '已加入', value: 1}],
-      device_type: [],
-      sku_type: [],
-      device_type_format: [],
-      sku_type_format: [],
-      sku_child_format: [],
-      layer_format: [{label: '全部层支持', value: 0}, {label: '仅支持第一层', value: 1}, {label: '第一层除外', value: 2}],
+      state: ["待上线", "已上线", "已下线"],
+      state_format: [{label: '待上线', value: 0}, {label: '已上线', value: 1}, {label: '已下线', value: 2}],
+      channel: {
+          0: '小程序',
+          1: '机顶屏',
+          2: '刷脸屏'
+      },
+      channel_format: [{label: '小程序', value: 0}, {label: '机顶屏', value: 1}, {label: '刷脸屏', value: 2}],
+      materialList: [],
       temp: {
-        //id: undefined,
+        id: undefined,
         name: '',
-        pic1: '',
-        pic2: '',
-        pic3: '',
-        sku_type: '',
-        sku_child_type: '',
-        bar_code: '',
-        label: '',
-        device_type: ''
+        type: '',
+        channel: '',
+        url: ''
       },
       temp2: {
         sku_id: '',
@@ -251,16 +253,27 @@ export default {
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
-        update: '编辑商品',
-        create: '新增商品'
+        update: '编辑素材',
+        create: '新增素材'
       },
       dialogPvVisible: false,
+      deviceData: [],
+      selectedAmount: 0,
+      deviceKey: 0,
+      device_total: 0,
+      deviceLoading: true,
+      deviceQuery: {
+        page_size: 10,
+        page_index: 1,
+        order_by: '',
+        order_type: 'desc'
+      },
+      deviceSearchQuery: {
+        device_code: ''
+      },
       rules: {
         name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
-        bar_code: [{ required: true, message: '请输入条形码', trigger: 'blur' }],
-        sku_type: [{ required: true, message: '请选择商品一级分类', trigger: 'change' }],
-        sku_child_type: [{ required: true, message: '请选择商品二级分类', trigger: 'change' }],
-        device_type: [{ required: true, message: '请选择类型', trigger: 'change' }]
+        type: [{ required: true, message: '请输入条形码', trigger: 'blur' }]
       },
       add_rules: {
         cost: [{ required: true, message: '请输入成本价', trigger: 'blur' }],
@@ -274,51 +287,34 @@ export default {
     }
   },
   created() {
-    this.getSelect();
+    this.getMaterialList();
+    this.getList();
+    this.getDeviceList();
   },
   methods: {
-    getSelect() {
-      skuSelect({}).then(res => {
-        let d = [];
-        let s = [];
-        for (var i in res.data.device_type) {
-          d.push({label: res.data.device_type[i], value: i});
-        }
-        this.device_type_format = d;
-        this.device_type = res.data.device_type;
-        this.getskuType()
-        
+    getDeviceList() {
+      this.deviceLoading = true;
+      let data = this.deviceQuery;
+      data.search = JSON.stringify(this.deviceSearchQuery);
+      deviceList(data).then(res => {
+        this.deviceLoading = false;
+        this.deviceData = res.data.list;
+        this.device_total = res.data.total;
       });
     },
-    getskuType() {
-      skutypeList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let s = [];
-        let c = [];
-        let list = res.data.list;
-        this.sku_type = list;
-        for (var i in list) {
-          s.push({label: list[i].name, value: list[i].id});
-        }
-        this.sku_type_format = s;
-        if (list[0].child_list.length) {
-          list[0].child_list.forEach(v => {
-            c.push({label: v.name, value: v.id});
-          });
-        }
-        this.sku_child_format = c;
-        this.getList()
-      });
+    selectDeviceAll() {
+      this.selectedAmount = this.device_total;
+    },
+    selectDevice() {},
+    handleSelectionChange(val) {
+      this.multipleSelection = val;
+      this.selectedAmount = val.length;
     },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
       data.search = JSON.stringify(this.searchQuery);
-      skuList(data).then(res => {
+      adList(data).then(res => {
         this.listLoading = false;
         let list = res.data.list;
         if (list.length) {
@@ -333,18 +329,35 @@ export default {
         this.total = res.data.total;
       });
     },
+    getMaterialList() {
+      let data = {
+        page_size: 1000,
+        page_index: 1,
+        order_by: '',
+        order_type: 'desc'
+      };
+      let search = {
+        name: '',
+        type: '',
+        state: ''
+      };
+      data.search = JSON.stringify(search);
+      materialList(data).then(res => {
+        let list = res.data.list;
+        let _data = [];
+        list.forEach(v => {
+          _data.push({key: v.id, label: v.name});
+        });
+        this.materialList = _data;
+      });
+    },
     resetTemp() {
       this.temp = {
-        //id: undefined,
+        id: undefined,
         name: '',
-        pic1: '',
-        pic2: '',
-        pic3: '',
-        sku_type: '',
-        sku_child_type: '',
-        bar_code: '',
-        label: '',
-        device_type: ''
+        type: '',
+        channel: '',
+        url: ''
       }
     },
     resetTemp2() {
@@ -440,10 +453,11 @@ export default {
         order_type: 'desc'
       };
       this.searchQuery = {
-        name: '',
-        id: '',
+        ad_name: '',
+        channel: '',
         state: '',
-        device_type: ''
+        start_time: '',
+        end_time: ''
       }
       this.getList()
     },
