@@ -1,7 +1,6 @@
 <template>
   <div class="dashboard-container">
-    <!-- <div class="dashboard-text">name: {{ name }}</div> -->
-    <iframe class="ifa" scrolling=auto src="https://datav.aliyuncs.com/share/9df6d81f81be0eb28010ed22980c1750" frameborder="0"></iframe>
+    <iframe class="ifa" scrolling=auto src="https://datav.aliyuncs.com/share/5f9ea07979bd2240fca93ce1ba8614e9" frameborder="0"></iframe>
   </div>
 </template>
 
@@ -9,7 +8,7 @@
 import { mapGetters } from 'vuex'
 
 export default {
-  name: 'Dashboard',
+  name: 'Realtime',
   created() {
   },
   computed: {

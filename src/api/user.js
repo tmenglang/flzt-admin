@@ -19,3 +19,10 @@ export function logout() {
     url: '/user/logout',
   })
 }
+
+export function consumerList(data) {
+  return request({
+    url: '/consumer/list',
+    data
+  })
+}

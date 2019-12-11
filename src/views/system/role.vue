@@ -8,9 +8,6 @@
       <el-button class="filter-item" type="default" @click="handleReset">
         重置
       </el-button>
-      <!-- <el-button :loading="downloadLoading" class="filter-item" type="default" @click="handleDownload">
-        导出
-      </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px; float: right;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
@@ -34,9 +31,9 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">编辑</el-button>
+          <div style="white-space:nowrap;">
+            <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -44,8 +41,8 @@
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 600px; margin-left:50px;">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 90%; margin-left:50px;">
         <el-form-item label="角色名称" prop="role_name">
           <el-input v-model="temp.role_name" placeholder="请输入角色名称" />
         </el-form-item>
@@ -211,7 +208,6 @@ export default {
       this.resetTemp()
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
-      //this.initAreaData()
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
@@ -299,25 +295,25 @@ export default {
     handleFilter() {
       this.listQuery.page_index = 1
       this.getList()
-    },
-    handleDownload() {
-      this.downloadLoading = true
     }
   }
 }
 </script>
 <style>
-  .vm {
-    vertical-align: top;
-  }
-  .pages-wrap {
-    margin: 10px 0;
-  }
-  .fr {
-    float: right;
-  }
-  .el-checkbox__label {
+.vm {
+  vertical-align: top;
+}
+.pages-wrap {
+  margin: 10px 0;
+}
+.fr {
+  float: right;
+}
+.el-checkbox__label {
   padding-left: 5px;
+}
+.myDialog .el-dialog__body {
+  padding: 10px 20px;
 }
 .first-col {
   padding-left: 20px;
@@ -363,10 +359,10 @@ export default {
 .deliverySetting .deliverySetting-table .table-body .width120 {
   width: 120px;
 }
-/* .deliverySetting .deliverySetting-table .table-head .width265,
+.deliverySetting .deliverySetting-table .table-head .width265,
 .deliverySetting .deliverySetting-table .table-body .width265 {
-  width: 265px;
-} */
+  width: 600px;
+}
 .deliverySetting .deliverySetting-table .table-head {
   height: 36px;
   align-items: center;

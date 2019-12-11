@@ -1,17 +1,18 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
+      <el-input v-model="searchQuery.sku_id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select
         style="width: 200px"
-        v-model="searchQuery.company_id"
+        v-model="searchQuery.device_code"
         filterable
         remote
         reserve-keyword
-        placeholder="请输入商家名称"
-        :remote-method="remoteMethod"
+        placeholder="请输入货柜名称"
+        :remote-method="remoteMethod2"
         :loading="selectLoading">
         <el-option
-          v-for="item in company_id_format"
+          v-for="item in device_format"
           :key="item.value"
           :label="item.label"
           :value="item.value">
@@ -50,16 +51,26 @@
       v-loading="listLoading" 
       style="width: 100%; margin-top: 20px;">
       <el-table-column
-        prop="company_id" 
-        label="商家编号">
+        prop="pic1" 
+        label="图片">
+        <template slot-scope="scope">
+        <el-image 
+            style="width: 50px; height: 50px"
+            :src="scope.row.pic1">
+        </el-image>
+        </template>
       </el-table-column>
       <el-table-column
-        prop="company_name" 
-        label="所属商家">
+        prop="sku_id" 
+        label="商品id">
       </el-table-column>
       <el-table-column
-        prop="person_price" 
-        label="客单价">
+        prop="goods_name" 
+        label="商品名字">
+      </el-table-column>
+      <el-table-column
+        prop="sku_type_name" 
+        label="所属分类">
       </el-table-column>
       <el-table-column
         prop="goods_num" 
@@ -105,12 +116,11 @@
 </template>
 
 <script>
-import { merchantList } from '@/api/merchant'
 import { deviceList } from '@/api/device'
-import { saleCompany } from '@/api/data'
+import { saleGoods } from '@/api/data'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'DataCompany',
+  name: 'DataGoodsSJ',
   components: { Pagination },
   data() {
     return {
@@ -127,11 +137,12 @@ export default {
         order_type: 'desc'
       },
       searchQuery: {
-        company_id: '',
+        device_code: '',
+        sku_id: '',
         start_time: '',
         end_time: ''
       },
-      company_id_format: []
+      device_format: []
     }
   },
   created() {
@@ -157,51 +168,35 @@ export default {
       this.listQuery.page_index = 1;
       this.getList();
     },
-    getSelect() {
-      this.listLoading = true;
-      merchantList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let d = [];
-        res.data.list.forEach(v => {
-          d.push({label: v.company_name, value: v.id});
-        });
-        this.company_format = d;
-        this.getDevice();
-      });
-    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
       data.search = JSON.stringify(this.searchQuery);
-      saleCompany(data).then(res => {
+      saleGoods(data).then(res => {
         this.listLoading = false;
         this.tableData = res.data.list;
         this.total = res.data.total;
       });
     },
-    remoteMethod(query) {
+    remoteMethod2(query) {
       if (query !== '') {
         this.selectLoading = true;
-        merchantList({
+        deviceList({
           page_size: 10,
           page_index: 1,
           order_by: '',
           order_type: 'desc',
-          search: JSON.stringify({company_name: query})
+          search: JSON.stringify({device_name: query})
         }).then(res => {
           this.selectLoading = false;
           let list = [];
           res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
+            list.push({label: v.device_name, value: v.device_code});
           });
-          this.company_id_format = list;
+          this.device_format = list;
         });
       } else {
-        this.company_id_format = [];
+        this.device_format = [];
       }
     },
     handleReset() {
@@ -212,7 +207,8 @@ export default {
         order_type: 'desc'
       };
       this.searchQuery = {
-        company_id: '',
+        device_code: '',
+        sku_id: '',
         start_time: '',
         end_time: ''
       };
@@ -227,7 +223,7 @@ export default {
       let data = Object.assign({}, this.listQuery);
       data.search = JSON.stringify(this.searchQuery);
       data.download = 1;
-      saleCompany(data).then(res => {
+      saleGoods(data).then(res => {
         this.downloadLoading = false;
         var alink = document.createElement("a");
         alink.href = res;

@@ -1,27 +1,8 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.device_code" placeholder="货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="searchQuery.error_type" placeholder="请选择故障类型" clearable style="width: 150px" class="filter-item">
-        <el-option v-for="item in error_type_format" :key="item.value" :label="item.label" :value="item.value" />
-      </el-select>
-      <el-date-picker
-        style="width: 150px" 
-        class="vm" 
-        v-model="searchQuery.start_time"
-        type="date"
-        value-format="yyyy-MM-dd"
-        placeholder="上报开始时间">
-      </el-date-picker>
-      <el-date-picker
-        style="width: 150px" 
-        class="vm" 
-        v-model="searchQuery.end_time"
-        type="date"
-        value-format="yyyy-MM-dd"
-        placeholder="上报结束时间">
-      </el-date-picker>
-      
+      <el-input v-model="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="searchQuery.phone" placeholder="手机号号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-button class="filter-item" type="primary" @click="handleFilter">
         筛选
       </el-button>
@@ -38,28 +19,57 @@
       v-loading="listLoading" 
       style="width: 100%; margin-top: 20px;">
       <el-table-column
-        prop="device_code" 
-        label="设备号">
+        prop="uid" 
+        label="用户id">
       </el-table-column>
       <el-table-column
-        prop="device_name" 
-        label="设备名称">
+        prop="pic_url" 
+        label="头像">
+        <template slot-scope="scope">、
+          <el-image 
+            style="width: 50px; height: 50px"
+            :src="scope.row.pic_url">
+          </el-image>
+        </template>
       </el-table-column>
       <el-table-column
-        prop="create_time" 
-        label="上报时间">
+        prop="name" 
+        label="名称">
       </el-table-column>
       <el-table-column
-        prop="error_time" 
-        label="故障时长（s）">
+        prop="sex" 
+        label="性别">
+        <template slot-scope="scope">
+          <span>{{ sex[scope.row.sex] }}</span>
+        </template>
       </el-table-column>
       <el-table-column
-        prop="error_type" 
-        label="故障类型">
+        prop="phone" 
+        label="电话">
       </el-table-column>
       <el-table-column
-        prop="details" 
-        label="故障详情">
+        prop="country" 
+        label="国家">
+      </el-table-column>
+      <el-table-column
+        prop="province" 
+        label="省份">
+      </el-table-column>
+      <el-table-column
+        prop="city" 
+        label="城市">
+      </el-table-column>
+      <el-table-column
+        prop="is_fellow" 
+        label="是否关注公众号">
+      </el-table-column>
+      <el-table-column
+        prop="last_buy_time" 
+        label="最近一次购买时间">
+      </el-table-column>
+      <el-table-column
+        prop="total_buy" 
+        label="购买总额">
       </el-table-column>
     </el-table>
     <div class="pages-wrap">
@@ -69,11 +79,10 @@
 </template>
 
 <script>
-import { deviceError } from '@/api/device'
-import { dictInfo } from '@/api/material'
+import { consumerList } from '@/api/user'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Trouble',
+  name: 'User',
   components: { Pagination },
   data() {
     return {
@@ -90,39 +99,25 @@ export default {
         order_type: 'desc'
       },
       searchQuery: {
-        device_code: '',
-        error_type: '',
-        start_time: '',
-        end_time: ''
+        uid: '',
+        phone: ''
       },
-      error_type: {},
-      error_type_format: []
+      sex: {
+        1: '男',
+        2: '女'
+      }
     }
   },
   created() {
-    this.searchQuery.device_code = this.$route.query.device_code ? this.$route.query.device_code : '';
-    this.getDictInfo();
     this.getList();
   },
   methods: {
-    getDictInfo() {
-      let that = this;
-      dictInfo().then(res => {
-        let di = res.data;
-        this.error_type = di.device_abnormal_type;
-        let list = [];
-        for (let i in di.device_abnormal_type) {
-          list.push({label: di.device_abnormal_type[i], value: parseInt(i)});
-        }
-        this.error_type_format = list;
-        that.getList();
-      });
-    },
     getList() {
       this.listLoading = true;
-      let data = this.listQuery;
+      let data = Object.assign({}, this.listQuery);
       data.search = JSON.stringify(this.searchQuery);
-      deviceError(data).then(res => {
+      
+      consumerList(data).then(res => {
         this.listLoading = false;
         this.tableData = res.data.list;
         this.total = res.data.total;
@@ -152,7 +147,7 @@ export default {
       let data = Object.assign({}, this.listQuery);
       data.search = JSON.stringify(this.searchQuery);
       data.download = 1;
-      deviceError(data).then(res => {
+      consumerList(data).then(res => {
         this.downloadLoading = false;
         var alink = document.createElement("a");
         alink.href = res;

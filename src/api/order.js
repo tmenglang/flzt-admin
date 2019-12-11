@@ -54,3 +54,17 @@ export function abnormalDeal(data) {
         data
     })
 }
+
+export function repairDeal(data) {
+    return request({
+        url: '/repair/deal',
+        data
+    })
+}
+
+export function refundDeal(data) {
+    return request({
+        url: '/refund/deal',
+        data
+    })
+}

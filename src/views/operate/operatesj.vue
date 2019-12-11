@@ -3,22 +3,6 @@
     <div class="filter-container">
       <el-select
         style="width: 200px"
-        v-model="searchQuery.company_id"
-        filterable
-        remote
-        reserve-keyword
-        placeholder="请输入商家名称"
-        :remote-method="remoteMethod"
-        :loading="selectLoading">
-        <el-option
-          v-for="item in company_id_format"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
-      <el-select
-        style="width: 200px"
         v-model="searchQuery.device_code"
         filterable
         remote
@@ -78,10 +62,6 @@
         </template>
       </el-table-column>
       <el-table-column
-        prop="company_name" 
-        label="所属公司">
-      </el-table-column>
-      <el-table-column
         prop="addr" 
         label="地址">
       </el-table-column>
@@ -127,12 +107,11 @@
 </template>
 
 <script>
-import { merchantList } from '@/api/merchant'
 import { deviceList, deviceSelect } from '@/api/device'
 import { stocksList, stocksDetails } from '@/api/operate'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Operate',
+  name: 'OperateSJ',
   components: { Pagination },
   data() {
     return {
@@ -149,10 +128,8 @@ export default {
         order_type: 'desc'
       },
       searchQuery: {
-        company_id: '',
         device_code: ''
       },
-      company_id_format: [],
       device_format: [],
       device_type: null,
       device_state: null,
@@ -181,41 +158,6 @@ export default {
         this.getList()
       });
     },
-    getSelect() {
-      this.listLoading = true;
-      merchantList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let d = [];
-        res.data.list.forEach(v => {
-          d.push({label: v.company_name, value: v.id});
-        });
-        this.company_format = d;
-        this.getDevice();
-      });
-    },
-    getDevice() {
-      let params = {
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      };
-      if (this.searchQuery.company_id !== '') {
-        params.search = JSON.stringify({company_id: this.searchQuery.company_id});
-      };
-      deviceList(params).then(res => {
-        let d = [];
-        res.data.list.forEach(v => {
-          d.push({label: v.device_name, value: v.device_code});
-        });
-        this.device_format = d;
-        this.getList();
-      });
-    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
@@ -225,27 +167,6 @@ export default {
         this.tableData = res.data.list;
         this.total = res.data.total;
       });
-    },
-    remoteMethod(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
-          });
-          this.company_id_format = list;
-        });
-      } else {
-        this.company_id_format = [];
-      }
     },
     remoteMethod2(query) {
       if (query !== '') {
@@ -285,7 +206,6 @@ export default {
         order_type: 'desc'
       };
       this.searchQuery = {
-        company_id: '',
         device_code: ''
       };
       this.getList();
@@ -305,9 +225,6 @@ export default {
         alink.href = res;
         alink.click();
       });
-    },
-    handleRemove(row) {
-      console.log(row);
     }
   }
 }

@@ -129,9 +129,9 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleDetail(scope.row)">详情</el-button>
+          <div style="white-space:nowrap;">
+            <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -139,12 +139,13 @@
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" custom-class="myDialog">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
       <h3>异常订单详情</h3>
       <el-row>
         <el-col :span="12"><div class="lh30">异常订单号：{{temp ? temp.operation_id : ''}}</div></el-col>
         <el-col :span="12"><div class="lh30">处理状态：{{temp ? state[temp.state] : ''}}</div></el-col>
       </el-row>
+      <div v-if="temp && temp.pic_info.show_type == 1">
       <h3>消费前</h3>
       <el-row>
         <el-col :span="6"><div><el-image 
@@ -215,6 +216,13 @@
             </div>
           </el-image></div></el-col>
       </el-row>
+      </div>
+      <div v-if="temp && temp.pic_info.show_type == 2">
+        <h3>消费视频</h3>
+        <video :src="temp ? temp.pic_info.dynamic_video : ''" controls="controls" style="width:100%;">
+        您的浏览器不支持 video 标签。
+        </video>
+      </div>
       <el-row style="margin: 10px 0;">
         <el-col :span="12"><h3>关联商品</h3></el-col>
         <el-col :span="12" style="text-align: right;" v-if="temp && temp.state == 0">
@@ -264,7 +272,7 @@ import { deviceList } from '@/api/device'
 import { goodsList } from '@/api/goods'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Reject',
+  name: 'Error',
   components: { Pagination },
   data() {
     return {
@@ -399,7 +407,7 @@ export default {
           page_index: 1,
           order_by: '',
           order_type: 'desc',
-          search: JSON.stringify({goods_name: query})
+          search: JSON.stringify({goods_name: query, company_id: this.temp.company_id})
         };
         goodsList(data).then(res => {
           this.loading = false;
@@ -568,8 +576,8 @@ export default {
     padding-bottom: 10px;
   }
   .image-size {
-    width: 120px;
-    height: 90px;
+    width: 200px;
+    height: 150px;
   }
   .image-slot {
     display: flex;

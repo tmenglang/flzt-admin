@@ -1,9 +1,21 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.device_code" placeholder="货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select v-model="searchQuery.device_state" placeholder="消息状态" clearable style="width: 120px" class="filter-item">
-        <el-option v-for="item in device_state_format" :key="item.value" :label="item.label" :value="item.value" />
+      <el-select
+        style="width: 200px"
+        v-model="searchQuery.device_code"
+        filterable
+        remote
+        reserve-keyword
+        placeholder="请输入货柜名称"
+        :remote-method="remoteMethod2"
+        :loading="selectLoading">
+        <el-option
+          v-for="item in device_format"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value">
+        </el-option>
       </el-select>
       <el-date-picker
         style="width: 150px" 
@@ -21,7 +33,6 @@
         value-format="yyyy-MM-dd"
         placeholder="结束时间">
       </el-date-picker>
-      
       <el-button class="filter-item" type="primary" @click="handleFilter">
         筛选
       </el-button>
@@ -35,73 +46,76 @@
     <el-table
       :data="tableData"
       border  
+      @sort-change="changeSort"
       v-loading="listLoading" 
       style="width: 100%; margin-top: 20px;">
       <el-table-column
         prop="device_code" 
-        label="货柜编号">
+        label="货柜code">
       </el-table-column>
       <el-table-column
         prop="device_name" 
-        label="货柜名称">
+        label="货柜名字">
       </el-table-column>
       <el-table-column
-        prop="company_name" 
-        label="所属商家">
+        prop="person_price" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="客单价">
       </el-table-column>
       <el-table-column
-        prop="send_type" 
-        label="上报/下发类型">
+        prop="goods_num" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="销售量">
       </el-table-column>
       <el-table-column
-        prop="msg_type" 
-        label="消息类型">
+        prop="cost" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="成本">
       </el-table-column>
       <el-table-column
-        prop="device_state" 
-        label="消息状态">
-        <template slot-scope="scope">
-          <span>{{ device_state[scope.row.device_state] }}</span>
-        </template>
+        prop="sale" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="销售额">
       </el-table-column>
       <el-table-column
-        prop="error" 
-        label="异常原因">
+        prop="profit" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="毛利">
       </el-table-column>
       <el-table-column
-        prop="create_time" 
-        label="时间">
+        prop="discount" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="优惠金额">
       </el-table-column>
-      <el-table-column label="操作">
-        <template slot-scope="scope">
-            <div style="white-space:nowrap;">
-              <el-link type="primary" @click="handleUpdate(scope.row)">详情</el-link>
-            </div>
-        </template>
+      <el-table-column
+        prop="payment" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="实际金额">
       </el-table-column>
     </el-table>
     <div class="pages-wrap">
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
-
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" custom-class="myDialog" width="1000px">
-      <div>
-        <p v-for="(value, key, index) in temp.details" :key="index">{{key}}: {{value}}</p>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
 <script>
-import { deviceLog } from '@/api/device'
+import { deviceList } from '@/api/device'
+import { saleDevice } from '@/api/data'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Log',
+  name: 'DataDeviceSJ',
   components: { Pagination },
   data() {
     return {
       selectLoading: false,
-      btnLoading: false,
       tableData: [],
       tableKey: 0,
       total: 0,
@@ -115,48 +129,65 @@ export default {
       },
       searchQuery: {
         device_code: '',
-        device_state: '',
         start_time: '',
         end_time: ''
       },
-      device_state: {
-        1: '正常',
-        0: '异常'
-      },
-      device_state_format: [{value: 1, label: '正常'}, {value: 0, label: '异常'}],
-      temp: {
-        details: {}
-      },
-      dialogFormVisible: false,
-      dialogStatus: '',
-      textMap: {
-        update: '日志详情'
-      }
+      device_format: []
     }
   },
   created() {
     this.getList();
   },
   methods: {
+    // 从后台获取数据,重新排序
+    changeSort (val) {
+      console.log(val) // column: {…} order: "ascending" prop: "date"
+      switch (val.order) {
+        case 'ascending':
+          this.listQuery.order_by = val.prop;
+          this.listQuery.order_type = 'asc';
+          break;
+        case 'descending':
+          this.listQuery.order_by = val.prop;
+          this.listQuery.order_type = 'desc';
+          break;
+        default:
+          this.listQuery.order_by = '';
+          this.listQuery.order_type = 'desc';
+      }
+      this.listQuery.page_index = 1;
+      this.getList();
+    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
       data.search = JSON.stringify(this.searchQuery);
-      deviceLog(data).then(res => {
+      saleDevice(data).then(res => {
         this.listLoading = false;
         this.tableData = res.data.list;
         this.total = res.data.total;
       });
     },
-    handleUpdate(row) {
-      this.temp = Object.assign({}, row) // copy obj
-      this.temp.details = JSON.parse(row.details)
-      this.dialogStatus = 'update'
-      this.dialogFormVisible = true
-    },
-    handleFilter() {
-      this.listQuery.page_index = 1
-      this.getList()
+    remoteMethod2(query) {
+      if (query !== '') {
+        this.selectLoading = true;
+        deviceList({
+          page_size: 10,
+          page_index: 1,
+          order_by: '',
+          order_type: 'desc',
+          search: JSON.stringify({device_name: query})
+        }).then(res => {
+          this.selectLoading = false;
+          let list = [];
+          res.data.list.forEach(v => {
+            list.push({label: v.device_name, value: v.device_code});
+          });
+          this.device_format = list;
+        });
+      } else {
+        this.device_format = [];
+      }
     },
     handleReset() {
       this.listQuery = {
@@ -167,18 +198,21 @@ export default {
       };
       this.searchQuery = {
         device_code: '',
-        device_state: '',
         start_time: '',
         end_time: ''
       };
       this.getList();
+    },
+    handleFilter() {
+      this.listQuery.page_index = 1
+      this.getList()
     },
     handleDownload() {
       this.downloadLoading = true
       let data = Object.assign({}, this.listQuery);
       data.search = JSON.stringify(this.searchQuery);
       data.download = 1;
-      deviceLog(data).then(res => {
+      saleDevice(data).then(res => {
         this.downloadLoading = false;
         var alink = document.createElement("a");
         alink.href = res;
@@ -197,6 +231,10 @@ export default {
   }
   .fr {
     float: right;
+  }
+  .img {
+    width: 50px;
+    height: 50px;
   }
   .myDialog .el-dialog__body {
     padding: 10px 20px;

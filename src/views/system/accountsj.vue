@@ -3,31 +3,12 @@
     <div class="filter-container">
       <el-input v-model="searchQuery.account" placeholder="账号名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-input v-model="searchQuery.user_name" placeholder="用户昵称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select
-        style="width: 200px"
-        v-model="searchQuery.company_id"
-        filterable
-        remote
-        reserve-keyword
-        placeholder="请输入商家名称"
-        :remote-method="remoteMethod"
-        :loading="selectLoading">
-        <el-option
-          v-for="item in options"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
       <el-button class="filter-item" type="primary" @click="handleFilter">
         筛选
       </el-button>
       <el-button class="filter-item" type="default" @click="handleReset">
         重置
       </el-button>
-      <!-- <el-button :loading="downloadLoading" class="filter-item" type="default" @click="handleDownload">
-        导出
-      </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px; float: right;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
@@ -44,10 +25,6 @@
       <el-table-column
         prop="user_name" 
         label="用户昵称">
-      </el-table-column>
-      <el-table-column
-        prop="company_name" 
-        label="商家">
       </el-table-column>
       <el-table-column
         prop="phone" 
@@ -82,24 +59,6 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 90%; margin-left:50px;">
-        <el-form-item label="商家" prop="company_id">
-          <el-select
-            style="width: 200px"
-            v-model="temp.company_id"
-            filterable
-            remote
-            reserve-keyword
-            placeholder="请输入商家名称"
-            :remote-method="remoteMethod2"
-            :loading="selectLoading">
-            <el-option
-              v-for="item in company_id_format"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
-        </el-form-item>
         <el-form-item label="账号" prop="account">
           <el-input v-model="temp.account" placeholder="请输入账号" />
         </el-form-item>
@@ -138,10 +97,9 @@
 
 <script>
 import { userList, roleList, userUpdate } from '@/api/system'
-import { merchantList } from '@/api/merchant'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Account',
+  name: 'AccountSJ',
   components: { Pagination },
   data() {
     return {
@@ -160,8 +118,7 @@ export default {
       },
       searchQuery: {
         account: '',
-        user_name: '',
-        company_id: ''
+        user_name: ''
       },
       state: [{label: '有效', value: 1}, {label: '无效', value: 2}],
       state_obj: {
@@ -206,77 +163,22 @@ export default {
   },
   methods: {
     getSelect() {
-      merchantList({
+      roleList({
         page_size: 100,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc'
-      }).then(res => {
-        let list = [];
-        res.data.list.forEach(v => {
-          list.push({label: v.company_name, value: v.id});
+        page_index: 1,
+        order_by: '',
+        order_type: 'desc'
+      }).then(res2 => {
+        let list2 = [];
+        let obj = {};
+        res2.data.list.forEach(v => {
+          list2.push({label: v.role_name, value: v.id});
+          obj[v.id] = v.role_name;
         });
-        this.company_id_format = list;
-        this.company_id_list = list;
-        roleList({
-          page_size: 100,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc'
-        }).then(res2 => {
-          let list2 = [];
-          let obj = {};
-          res2.data.list.forEach(v => {
-            list2.push({label: v.role_name, value: v.id});
-            obj[v.id] = v.role_name;
-          });
-          this.type_format = list2;
-          this.role_obj = obj;
-          this.getList()
-        });
+        this.type_format = list2;
+        this.role_obj = obj;
+        this.getList()
       });
-    },
-    remoteMethod(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
-          });
-          this.options = list;
-        });
-      } else {
-        this.options = [];
-      }
-    },
-    remoteMethod2(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
-          });
-          this.company_id_format = list;
-        });
-      } else {
-        this.company_id_format = [];
-      }
     },
     getList() {
       this.listLoading = true;
@@ -297,7 +199,6 @@ export default {
     resetTemp() {
       this.temp = {
         id: undefined,
-        company_id: '',
         account: '',
         phone: '',
         user_name: '',
@@ -339,9 +240,6 @@ export default {
       this.temp = Object.assign({}, row) // copy obj
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
-      this.company_id_format = this.company_id_list.filter(item => {
-        return item.label == row.company_name;
-      });
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
@@ -406,17 +304,13 @@ export default {
       };
       this.searchQuery = {
         account: '',
-        user_name: '',
-        company_id: ''
+        user_name: ''
       }
       this.getList();
     },
     handleFilter() {
       this.listQuery.page_index = 1
       this.getList()
-    },
-    handleDownload() {
-      this.downloadLoading = true
     }
   }
 }

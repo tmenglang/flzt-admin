@@ -15,9 +15,6 @@
       <el-button class="filter-item" type="default" @click="handleReset">
         重置
       </el-button>
-      <!-- <el-button :loading="downloadLoading" class="filter-item" type="default" @click="handleDownload">
-        导出
-      </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px; float: right;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
@@ -34,8 +31,7 @@
           <!-- <img :src="scope.row.pic1" class="img" /> -->
           <el-image 
             style="width: 50px; height: 50px"
-            :src="scope.row.url" 
-            :preview-src-list="scope.row.srcList">
+            :src="scope.row.url">
           </el-image>
         </template>
       </el-table-column>
@@ -53,6 +49,9 @@
       <el-table-column
         prop="channel" 
         label="投放渠道">
+        <template slot-scope="scope">
+          <span>{{ channel[scope.row.channel] }}</span>
+        </template>
       </el-table-column>
       <el-table-column
         prop="state" 
@@ -75,15 +74,15 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">查看</el-button>
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">通过</el-button>
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">驳回</el-button>
+          <div style="white-space:nowrap;" v-if="scope.row.state == 1">
+            <el-link type="primary" @click="handleDetail(scope.row)">查看</el-link>
+            <el-link type="primary" @click="handleUpdate(scope.row, 2)">通过</el-link>
+            <el-link type="primary" @click="handleUpdate(scope.row, 3)">驳回</el-link>
+          </div>
+          <div style="white-space:nowrap;" v-if="scope.row.state == 2 || scope.row.state == 3">
+            <el-link type="primary" @click="handleDetail(scope.row)">查看</el-link>
+            <el-link type="primary" @click="handleUpdate(scope.row, -1)">删除</el-link>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -91,8 +90,8 @@
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 80%; margin-left:50px;">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 90%; margin-left:50px;">
         <el-form-item label="素材名称" prop="name">
           <el-input v-model="temp.name" placeholder="请输入素材名称" />
         </el-form-item>
@@ -103,25 +102,34 @@
         </el-form-item>
         <el-form-item label="投放位置" prop="channel">
           <el-radio-group v-model="temp.channel">
-            <el-radio :label="1">小程序-banner</el-radio>
-            <el-radio :label="2">小程序-首页展示</el-radio>
-            <el-radio :label="3">小程序-开门页面展示</el-radio>
-            <el-radio :label="4">小程序-关门页面展示</el-radio>
+            <el-radio v-for="(value, key, index) in channel" :key="index" :label="key">{{value}}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="素材">
           <el-upload
-            action="https://portal.fsylit.com/file/upload"
-            list-type="picture-card" 
-            :on-preview="handlePictureCardPreview"
-            :on-success="handlePicSuccess" 
-            accept=".jpg,.jpeg,.png,.bmp,.JPG,.JPEG,.BMP" 
-            :on-remove="handleRemove">
-            <i class="el-icon-plus"></i>
+            v-if="temp.type == 1"
+            class="avatar-uploader"
+            accept=".jpg,.jpeg,.png,.bmp,.JPG,.JPEG,.BMP"
+            action="https://testportal.fsylit.com/file/upload"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload">
+            <img v-if="imageUrl" :src="imageUrl" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
           </el-upload>
-          <el-dialog :visible.sync="dialogVisible">
-            <img width="100%" :src="dialogImageUrl" alt="">
-          </el-dialog>
+          <el-upload
+            class="avatar-uploader"
+            v-if="temp.type == 2"
+            accept=".mp4,.3gp,.wmv,.avi,.mpg,.mpeg,.mov"
+            action="https://testportal.fsylit.com/file/upload"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeVideoUpload">
+            <video v-if="imageUrl" :src="imageUrl" controls="controls" class="avatar">
+            您的浏览器不支持 video 标签。
+            </video>
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -134,33 +142,19 @@
       </div>
     </el-dialog>
     <el-dialog
-      title="加入我的商品"
+      title="查看素材"
       :visible.sync="centerDialogVisible">
-      <el-form ref="addForm" :rules="add_rules" :model="temp2" label-position="left" label-width="100px" style="width: 80%; margin-left:50px;">
-        <el-row>
-          <el-col :span="6"><div class="grid-content"><img :src="temp2.pic1" alt="" width="100" height="100"></div></el-col>
-          <el-col :span="18">
-            <div class="grid-content">{{temp2.name}}</div>
-            <div class="grid-content">条形码：{{temp2.bar_code}}</div>
-          </el-col>
-        </el-row>
-        <el-form-item label="成本价" prop="cost">
-          <el-input v-model="temp2.cost" placeholder="请输入成本价" />
-        </el-form-item>
-        <el-form-item label="销售价" prop="price">
-          <el-input v-model="temp2.price" placeholder="请输入销售价" />
-        </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="centerDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addToGoods()">应用</el-button>
-      </span>
+        <p v-if="temp2.state == 3" style="color: #ff0000; font-size: 14px; line-height: 40px;">驳回理由：{{temp2.check_reason}}</p>
+        <el-image :src="temp2.url" v-if="temp2.type == 1" style="width: 100%;"></el-image>
+        <video v-if="temp2.type == 2" :src="temp2.url" controls="controls" style="width:100%;">
+        您的浏览器不支持 video 标签。
+        </video>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { materialList, materialUpdate } from '@/api/material'
+import { materialList, materialUpdate, dictInfo } from '@/api/material'
 import Pagination from '@/components/Pagination'
 export default {
   name: 'Material',
@@ -184,24 +178,24 @@ export default {
         type: '',
         state: ''
       },
-      state: ["待审批", "已驳回", "已审批"],
-      state_format: [{label: '待审批', value: 0}, {label: '已驳回', value: 1}, {label: '已审批', value: 2}],
+      state: [],
+      state_format: [],
       type: {
-          0: '图片',
-          1: '视频'
+          1: '图片',
+          2: '视频'
       },
-      type_format: [{label: '图片', value: 0}, {label: '视频', value: 1}],
+      type_format: [{label: '图片', value: 1}, {label: '视频', value: 2}],
+      channel: {},
       temp: {
         id: undefined,
         name: '',
-        type: '',
+        type: 1,
         channel: '',
         url: ''
       },
       temp2: {
-        sku_id: '',
-        price: '',
-        cost: ''
+        type: '',
+        url: ''
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -220,15 +214,27 @@ export default {
       },
       skutype_list: [],
       centerDialogVisible: false,
-      dialogImageUrl: '',
+      imageUrl: '',
       dialogVisible: false,
       picList: []
     }
   },
   created() {
-    this.getList();
+    this.getDictInfo();
   },
   methods: {
+    getDictInfo() {
+      dictInfo().then(res => {
+        this.channel = res.data.ad_channel;
+        this.state = res.data.ad_material_state;
+        let p = [];
+        res.data.ad_material_state.forEach((v, k) => {
+          p.push({label: v, value: k});
+        });
+        this.state_format = p;
+        this.getList();
+      });
+    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
@@ -236,14 +242,6 @@ export default {
       materialList(data).then(res => {
         this.listLoading = false;
         let list = res.data.list;
-        if (list.length) {
-          list.forEach(v => {
-            v.srcList = [];
-            v.pic1 && v.srcList.push(v.pic1);
-            v.pic2 && v.srcList.push(v.pic2);
-            v.pic3 && v.srcList.push(v.pic3);
-          });
-        }
         this.tableData = list;
         this.total = res.data.total;
       });
@@ -252,31 +250,14 @@ export default {
       this.temp = {
         id: undefined,
         name: '',
-        type: '',
-        channel: '',
+        type: 1,
+        channel: 1,
         url: ''
       }
+      this.imageUrl = '';
     },
-    resetTemp2() {
-      this.temp2 = {
-        sku_id: '',
-        cost: '',
-        price: ''
-      }
-    },
-    changeChild(id) {
-      this.temp.sku_child_type = '';
-      let c = [];
-      this.sku_type.forEach(v => {
-        if (v.id == id) {
-          if (v.child_list.length) {
-            v.child_list.forEach(k => {
-              c.push({label: k.name, value: k.id});
-            });
-          }
-        }
-      });
-      this.sku_child_format = c;
+    changeChild(type) {
+      console.log(type);
     },
     handleCreate() {
       this.resetTemp()
@@ -289,14 +270,8 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          //this.temp.id = '' // mock a id
-          if (this.picList.length) {
-            this.temp.pic1 = this.picList[0];
-            this.temp.pic2 = this.picList[1] || '';
-            this.temp.pic3 = this.picList[2] || '';
-          }
           this.btnLoading = true;
-          skuUpdate(this.temp).then(() => {
+          materialUpdate(this.temp).then(() => {
             this.btnLoading = false;
             this.getList();
             this.dialogFormVisible = false
@@ -310,37 +285,63 @@ export default {
         }
       })
     },
-    handleUpdate(row) {
+    handleDetail(row) {
       this.temp2 = Object.assign({}, row) // copy obj
-      this.temp2.sku_id = row.id;
       this.centerDialogVisible = true
-      this.$nextTick(() => {
-        this.$refs['addForm'].clearValidate()
-      })
     },
-    addToGoods() {
-      this.$refs['addForm'].validate((valid) => {
-        if (valid) {
-          const tempData = {
-            goods_name: this.temp2.name,
-            sku_id: this.temp2.sku_id,
-            cost: this.temp2.cost,
-            price: this.temp2.price
-          }
-          this.btnLoading = true;
-          goodsUpdate(tempData).then(() => {
-            this.btnLoading = false;
-            this.getList();
-            this.centerDialogVisible = false;
-            this.$notify({
-              title: '提示',
-              message: '添加成功',
+    handleUpdate(row, type) {
+      let data = {
+        id: row.id
+      };
+      let msg = '';
+      switch (type) {
+        case -1:
+          msg = '删除';
+          data.state = 0;
+          break;
+        case 2:
+          msg = '通过';
+          data.state = 2;
+          break;
+        case 3:
+          msg = '驳回';
+          data.state = 3;
+          break;
+        default:
+      }
+      if (data.state == 3) {
+        this.$prompt('请输入驳回理由', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }).then(({ value }) => {
+          data.check_reason = value;
+          materialUpdate(data).then(res => {
+            this.$message({
               type: 'success',
-              duration: 2000
-            })
-          })
-        }
-      })
+              message: '操作成功!'
+            });
+            this.getList();
+          });
+        }).catch(() => {
+          //      
+        });
+      } else {
+        this.$confirm('确定对该素材进行' + msg + '操作么?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          materialUpdate(data).then(res => {
+            this.$message({
+              type: 'success',
+              message: '操作成功!'
+            });
+            this.getList();
+          });
+        }).catch(() => {
+          //         
+        });
+      }
     },
     handleReset() {
       this.listQuery = {
@@ -360,9 +361,6 @@ export default {
       this.listQuery.page_index = 1
       this.getList()
     },
-    handleDownload() {
-      this.downloadLoading = true
-    },
     setPicList(fileList) {
       let l = [];
       if (fileList.length) {
@@ -372,15 +370,23 @@ export default {
       }
       this.picList = l;
     },
-    handlePicSuccess(res, file, fileList) {
-      this.setPicList(fileList);
+    handleAvatarSuccess(res, file) {
+      this.imageUrl = file.response.data.file_path;
+      this.temp.url = this.imageUrl;
     },
-    handleRemove(file, fileList) {
-      this.setPicList(fileList);
+    beforeAvatarUpload(file) {
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isLt2M) {
+        this.$message.error('上传头像图片大小不能超过 2MB!');
+      }
+      return isLt2M;
     },
-    handlePictureCardPreview(file) {
-      this.dialogImageUrl = file.url;
-      this.dialogVisible = true;
+    beforeVideoUpload(file) {
+      const isLt2M = file.size / 1024 / 1024 < 200;
+      if (!isLt2M) {
+        this.$message.error('上传视频大小不能超过 200MB!');
+      }
+      return isLt2M;
     }
   }
 }
@@ -401,5 +407,41 @@ export default {
   } 
   .grid-content {
     line-height: 32px;
+  }
+  .myDialog .el-dialog__body {
+    padding: 10px 20px;
+  }
+  .myDialog h3 {
+    margin: 10px 0;
+  }
+  .el-radio {
+    display: block;
+    margin-bottom: 10px;
+  }
+  .el-link.el-link--primary {
+    margin-right: 10px;
+  }
+  .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+  }
+  .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
   }
 </style>

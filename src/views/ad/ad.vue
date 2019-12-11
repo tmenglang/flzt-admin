@@ -30,9 +30,6 @@
       <el-button class="filter-item" type="default" @click="handleReset">
         重置
       </el-button>
-      <!-- <el-button :loading="downloadLoading" class="filter-item" type="default" @click="handleDownload">
-        导出
-      </el-button> -->
       <el-button class="filter-item" style="margin-left: 10px; float: right;" type="primary" icon="el-icon-edit" @click="handleCreate">
         新增
       </el-button>
@@ -86,15 +83,22 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">查看</el-button>
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">编辑</el-button>
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">删除</el-button>
+          <div style="white-space:nowrap;" v-if="scope.row.state == 1">
+          <el-link type="primary" @click="handleDetail(scope.row)">查看</el-link>
+          <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
+          <el-link type="primary" @click="handleState(scope.row, -1)">删除</el-link>
+          </div>
+          <div style="white-space:nowrap;" v-if="scope.row.state == 2">
+          <el-link type="primary" @click="handleDetail(scope.row)">查看</el-link>
+          <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
+          <el-link type="primary" @click="handlestate(scope.row, 3)">下线</el-link>
+          </div>
+          <div style="white-space:nowrap;" v-if="scope.row.state == 3">
+          <el-link type="primary" @click="handleDetail(scope.row)">查看</el-link>
+          <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
+          <el-link type="primary" @click="handlestate(scope.row, 2)">下线</el-link>
+          <el-link type="primary" @click="handleState(scope.row, -1)">删除</el-link>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -102,47 +106,47 @@
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 80%; margin-left:50px;">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 90%; margin-left:50px;">
         <el-divider content-position="left">基本信息</el-divider>
         <el-form-item label="素材名称" prop="ad_name">
           <el-input v-model="temp.ad_name" placeholder="请输入素材名称" />
         </el-form-item>
-        <el-form-item label="素材名称" prop="start_time">
+        <el-form-item label="素材名称" prop="start_time_arr">
           <el-date-picker
-            v-model="temp.start_time"
+            v-model="temp.start_time_arr"
             type="datetimerange"
             range-separator="至"
+            value-format="yyyy-MM-dd HH:mm:ss"
             start-placeholder="开始日期"
             end-placeholder="结束日期">
           </el-date-picker>
         </el-form-item>
         <el-form-item label="广告播放间隔" prop="pic_show_time">
-          <el-input v-model="temp.pic_show_time" placeholder="" />
+          图片播放 <el-input v-model="temp.pic_show_time" placeholder="" style="width: 100px;" /> 秒后切换到下一个素材
         </el-form-item>
         <el-divider content-position="left">投放信息</el-divider>
         <el-form-item label="投放位置" prop="channel">
           <el-radio-group v-model="temp.channel">
-            <el-radio :label="1">小程序-banner</el-radio>
-            <el-radio :label="2">小程序-首页展示</el-radio>
-            <el-radio :label="3">小程序-开门页面展示</el-radio>
-            <el-radio :label="4">小程序-关门页面展示</el-radio>
+            <el-radio v-for="(value, key, index) in channel" :key="index" :label="key">{{value}}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="选择素材">
-          <el-transfer v-model="temp.material_ids" :data="materialList"></el-transfer>
+          <el-transfer v-model="temp.material_ids_arr" :data="materialList"></el-transfer>
         </el-form-item>
         <el-divider content-position="left">选择投放设备</el-divider>
         <el-row>
-          <el-col :span="6"><div><el-button type="primary" plain style="margin-right: 20px;" @click="selectDeviceAll()">全选</el-button>已选 {{selectedAmount}} </div></el-col>
+          <el-col :span="6"><div style="line-height: 40px;">已选 {{selectedAmount}} </div></el-col>
           <el-col :span="18"><div style="text-align: right;"><el-input v-model="deviceSearchQuery.device_code" placeholder="货柜编号" style="width: 300px;" /><el-button type="primary" @click="getDeviceList()">确 定</el-button></div></el-col>
         </el-row>
         <el-table
+          ref="multipleTable"
           :data="deviceData"
+          height="300"
           border  
           v-loading="deviceLoading" 
           @selection-change="handleSelectionChange" 
-          style="width: 100%; margin-top: 20px;">
+          style="width: 100%; margin-top: 10px;">
           <el-table-column
             type="selection"
             width="55">
@@ -167,42 +171,29 @@
         </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">
+        <el-button @click="cancelUpdate()">
           取消
         </el-button>
-        <el-button type="primary" :loading="btnLoading" @click="createData()">
+        <el-button type="primary" :loading="btnLoading" @click="dialogStatus==='create' ? createData() : createData('updata')">
           保存
         </el-button>
       </div>
     </el-dialog>
     <el-dialog
-      title="加入我的商品"
-      :visible.sync="centerDialogVisible">
-      <el-form ref="addForm" :rules="add_rules" :model="temp2" label-position="left" label-width="100px" style="width: 80%; margin-left:50px;">
-        <el-row>
-          <el-col :span="6"><div class="grid-content"><img :src="temp2.pic1" alt="" width="100" height="100"></div></el-col>
-          <el-col :span="18">
-            <div class="grid-content">{{temp2.name}}</div>
-            <div class="grid-content">条形码：{{temp2.bar_code}}</div>
-          </el-col>
-        </el-row>
-        <el-form-item label="成本价" prop="cost">
-          <el-input v-model="temp2.cost" placeholder="请输入成本价" />
-        </el-form-item>
-        <el-form-item label="销售价" prop="price">
-          <el-input v-model="temp2.price" placeholder="请输入销售价" />
-        </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="centerDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addToGoods()">应用</el-button>
-      </span>
+      title="查看素材"
+      :visible.sync="adMaterialDialog">
+        <div v-for="(item, index) in ad_material" :key="index">
+          <el-image :src="item.url" v-if="item.type == 1" style="width: 100%;"></el-image>
+          <video v-if="item.type == 2" :src="item.url" controls="controls" style="width:100%;">
+          您的浏览器不支持 video 标签。
+          </video>
+        </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { adList, adUpdate, materialList } from '@/api/material'
+import { adList, adUpdate, materialList, adMaterial, dictInfo, adDetails } from '@/api/material'
 import { deviceList } from '@/api/device'
 import Pagination from '@/components/Pagination'
 export default {
@@ -229,26 +220,19 @@ export default {
         start_time: '',
         end_time: ''
       },
-      state: ["待上线", "已上线", "已下线"],
-      state_format: [{label: '待上线', value: 0}, {label: '已上线', value: 1}, {label: '已下线', value: 2}],
-      channel: {
-          0: '小程序',
-          1: '机顶屏',
-          2: '刷脸屏'
-      },
-      channel_format: [{label: '小程序', value: 0}, {label: '机顶屏', value: 1}, {label: '刷脸屏', value: 2}],
+      state: [],
+      state_format: [],
+      channel_format: [{label: '小程序-banner', value: 1}, {label: '小程序-首页展示', value: 2}, {label: '小程序-开门页面展示', value: 3}, {label: '小程序-关门页面展示', value: 4}],
+      channel: {},
       materialList: [],
       temp: {
         id: undefined,
-        name: '',
-        type: '',
+        ad_name: '',
         channel: '',
-        url: ''
-      },
-      temp2: {
-        sku_id: '',
-        price: '',
-        cost: ''
+        start_time_arr: [],
+        pic_show_time: '',
+        material_ids_arr: [],
+        device_codes_arr: []
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -256,6 +240,7 @@ export default {
         update: '编辑素材',
         create: '新增素材'
       },
+      multipleSelection: [],
       dialogPvVisible: false,
       deviceData: [],
       selectedAmount: 0,
@@ -263,7 +248,7 @@ export default {
       device_total: 0,
       deviceLoading: true,
       deviceQuery: {
-        page_size: 10,
+        page_size: 10000,
         page_index: 1,
         order_by: '',
         order_type: 'desc'
@@ -271,27 +256,39 @@ export default {
       deviceSearchQuery: {
         device_code: ''
       },
+      adMaterialDialog: false,
+      ad_material: [],
       rules: {
-        name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
-        type: [{ required: true, message: '请输入条形码', trigger: 'blur' }]
-      },
-      add_rules: {
-        cost: [{ required: true, message: '请输入成本价', trigger: 'blur' }],
-        price: [{ required: true, message: '请输入销售价', trigger: 'blur' }]
-      },
-      skutype_list: [],
-      centerDialogVisible: false,
-      dialogImageUrl: '',
-      dialogVisible: false,
-      picList: []
+        ad_name: [{ required: true, message: '请输入广告名称', trigger: 'blur' }],
+        channel: [{ required: true, message: '请选择渠道', trigger: 'change' }],
+        start_time_arr: [{ required: true, message: '请选择投放时间', trigger: 'blur' }],
+        pic_show_time: [{ required: true, message: '请输入时间间隔', trigger: 'blur' }]
+      }
     }
   },
   created() {
-    this.getMaterialList();
-    this.getList();
-    this.getDeviceList();
+    this.getDictInfo();
   },
   methods: {
+    getDictInfo() {
+      dictInfo().then(res => {
+        this.channel = res.data.ad_channel;
+        this.state = res.data.ad_state;
+        let p = [];
+        let m = [];
+        res.data.ad_state.forEach((v, k) => {
+          p.push({label: v, value: k});
+        });
+        for (let i in res.data.ad_channel) {
+          m.push({label: res.data.ad_channel[i], value: parseInt(i)});
+        }
+        this.state_format = p;
+        this.channel_format = m;
+        this.getMaterialList();
+        this.getList();
+        this.getDeviceList();
+      });
+    },
     getDeviceList() {
       this.deviceLoading = true;
       let data = this.deviceQuery;
@@ -302,13 +299,14 @@ export default {
         this.device_total = res.data.total;
       });
     },
-    selectDeviceAll() {
-      this.selectedAmount = this.device_total;
-    },
-    selectDevice() {},
     handleSelectionChange(val) {
       this.multipleSelection = val;
       this.selectedAmount = val.length;
+      let arr = [];
+      this.multipleSelection.forEach(v => {
+        arr.push(v.device_code);
+      });
+      this.temp.device_codes_arr = arr;
     },
     getList() {
       this.listLoading = true;
@@ -317,14 +315,6 @@ export default {
       adList(data).then(res => {
         this.listLoading = false;
         let list = res.data.list;
-        if (list.length) {
-          list.forEach(v => {
-            v.srcList = [];
-            v.pic1 && v.srcList.push(v.pic1);
-            v.pic2 && v.srcList.push(v.pic2);
-            v.pic3 && v.srcList.push(v.pic3);
-          });
-        }
         this.tableData = list;
         this.total = res.data.total;
       });
@@ -346,104 +336,129 @@ export default {
         let list = res.data.list;
         let _data = [];
         list.forEach(v => {
-          _data.push({key: v.id, label: v.name});
+          _data.push({key: v.id, label: v.name, disabled: v.state == 0 ? true : false});
         });
         this.materialList = _data;
       });
     },
+    cancelUpdate() {
+      this.dialogFormVisible = false;
+      this.resetTemp();
+    },
     resetTemp() {
       this.temp = {
         id: undefined,
-        name: '',
-        type: '',
+        ad_name: '',
         channel: '',
-        url: ''
+        start_time_arr: [],
+        pic_show_time: '',
+        material_ids_arr: [],
+        device_codes_arr: []
       }
-    },
-    resetTemp2() {
-      this.temp2 = {
-        sku_id: '',
-        cost: '',
-        price: ''
-      }
-    },
-    changeChild(id) {
-      this.temp.sku_child_type = '';
-      let c = [];
-      this.sku_type.forEach(v => {
-        if (v.id == id) {
-          if (v.child_list.length) {
-            v.child_list.forEach(k => {
-              c.push({label: k.name, value: k.id});
-            });
-          }
-        }
-      });
-      this.sku_child_format = c;
+      this.toggleSelection();
     },
     handleCreate() {
-      this.resetTemp()
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
     },
-    createData() {
+    createData(updata) {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           //this.temp.id = '' // mock a id
-          if (this.picList.length) {
-            this.temp.pic1 = this.picList[0];
-            this.temp.pic2 = this.picList[1] || '';
-            this.temp.pic3 = this.picList[2] || '';
+          if (!this.temp.material_ids_arr.length) {
+            this.$message({
+              message: '请选择素材！',
+              type: 'warning'
+            });
+            return
+          }
+          if (!this.temp.device_codes_arr.length) {
+            this.$message({
+              message: '请选择投放设备！',
+              type: 'warning'
+            });
+            return
+          }
+          let data = {
+            ad_name: this.temp.ad_name,
+            channel: this.temp.channel,
+            start_time: this.temp.start_time_arr[0],
+            end_time: this.temp.start_time_arr[1],
+            pic_show_time: this.temp.pic_show_time,
+            material_ids: this.temp.material_ids_arr.join(','),
+            device_codes: this.temp.device_codes_arr.join(',')
+          };
+          if (updata) {
+            data.id = this.temp.id;
           }
           this.btnLoading = true;
-          skuUpdate(this.temp).then(() => {
+          adUpdate(data).then(() => {
             this.btnLoading = false;
             this.getList();
             this.dialogFormVisible = false
             this.$notify({
               title: '提示',
-              message: '创建成功',
+              message: updata ? '更新成功' : '创建成功',
               type: 'success',
               duration: 2000
-            })
+            });
+            this.resetTemp();
           })
         }
       })
     },
     handleUpdate(row) {
-      this.temp2 = Object.assign({}, row) // copy obj
-      this.temp2.sku_id = row.id;
-      this.centerDialogVisible = true
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
       this.$nextTick(() => {
-        this.$refs['addForm'].clearValidate()
-      })
+        this.$refs['dataForm'].clearValidate()
+      });
+      adDetails({id: row.id}).then(res => {
+        let data = res.data;
+        this.temp.id = data.id;
+        this.temp.ad_name = data.ad_name;
+        this.temp.channel = data.channel;
+        this.temp.start_time_arr = [data.start_time, data.end_time];
+        this.temp.pic_show_time = data.pic_show_time;
+        let ml = [];
+        data.material_ids.split(',').forEach(v => {
+          ml.push(parseInt(v));
+        });
+        this.temp.material_ids_arr = ml;
+        this.temp.device_code_arr = data.device_codes ? data.device_codes.split(',') : [];
+        this.setMuliteData(data.device_codes);
+      });
     },
-    addToGoods() {
-      this.$refs['addForm'].validate((valid) => {
-        if (valid) {
-          const tempData = {
-            goods_name: this.temp2.name,
-            sku_id: this.temp2.sku_id,
-            cost: this.temp2.cost,
-            price: this.temp2.price
-          }
-          this.btnLoading = true;
-          goodsUpdate(tempData).then(() => {
-            this.btnLoading = false;
-            this.getList();
-            this.centerDialogVisible = false;
-            this.$notify({
-              title: '提示',
-              message: '添加成功',
-              type: 'success',
-              duration: 2000
-            })
+    setMuliteData(str) {
+      this.multipleSelection = [];
+      let arr = [];
+      if (str) {
+        arr = str.split(',');
+      }
+      if (arr.length) {
+        let list = []
+        this.deviceData.forEach(v => {
+          arr.forEach(i => {
+            if (i == v.device_code) {
+              list.push(v);
+            }
           })
-        }
-      })
+        });
+        this.multipleSelection = list;
+      }
+      this.toggleSelection(this.multipleSelection);
+    },
+    toggleSelection(rows) {
+      if (rows) {
+        rows.forEach(row => {
+          this.$refs.multipleTable.toggleRowSelection(row);
+        });
+      } else {
+        this.$refs.multipleTable.clearSelection();
+      }
     },
     handleReset() {
       this.listQuery = {
@@ -465,28 +480,51 @@ export default {
       this.listQuery.page_index = 1
       this.getList()
     },
-    handleDownload() {
-      this.downloadLoading = true
-    },
-    setPicList(fileList) {
-      let l = [];
-      if (fileList.length) {
-        fileList.forEach(v => {
-          l.push(v.response.data.file_path);
-        });
+    handleDetail(row) {
+      let data = {
+        id: row.id
       }
-      this.picList = l;
+      adMaterial(data).then(res => {
+        this.ad_material = res.data;
+        this.adMaterialDialog = true;
+      });
     },
-    handlePicSuccess(res, file, fileList) {
-      this.setPicList(fileList);
+    handleState(row, type) {
+      let data = {
+        id: row.id
+      };
+      let msg = '';
+      switch (type) {
+        case -1:
+          msg = '删除';
+          data.state = 0;
+          break;
+        case 2:
+          msg = '上线';
+          data.state = 2;
+          break;
+        case 3:
+          msg = '下线';
+          data.state = 3;
+          break;
+        default:
+      }
+      this.$confirm('确定对该广告进行' + msg + '操作么?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        adUpdate(data).then(res => {
+          this.$message({
+            type: 'success',
+            message: '操作成功!'
+          });
+          this.getList();
+        });
+      }).catch(() => {
+        //         
+      });
     },
-    handleRemove(file, fileList) {
-      this.setPicList(fileList);
-    },
-    handlePictureCardPreview(file) {
-      this.dialogImageUrl = file.url;
-      this.dialogVisible = true;
-    }
   }
 }
 </script>
@@ -504,7 +542,23 @@ export default {
   .fr {
     float: right;
   } 
+  .myDialog .el-dialog__body {
+    padding: 10px 20px;
+  }
+  .myDialog h3 {
+    margin: 10px 0;
+  }
   .grid-content {
     line-height: 32px;
+  }
+  .el-radio {
+    display: block;
+    margin-bottom: 10px;
+  }
+  .el-checkbox {
+    vertical-align: top;
+  }
+  .el-link.el-link--primary {
+    margin-right: 10px;
   }
 </style>

@@ -91,9 +91,9 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleDetail(scope.row)">详情</el-button>
+            <div style="white-space:nowrap;">
+              <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
+            </div>
         </template>
       </el-table-column>
     </el-table>
@@ -101,7 +101,8 @@
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" custom-class="myDialog">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
+      <div v-if="temp && temp.pic_info.show_type == 1">
       <h3>理货前</h3>
       <el-row>
         <el-col :span="6"><div><el-image 
@@ -172,6 +173,13 @@
             </div>
           </el-image></div></el-col>
       </el-row>
+      </div>
+      <div v-if="temp && temp.pic_info.show_type == 2">
+        <h3>理货视频</h3>
+        <video :src="temp ? temp.pic_info.dynamic_video : ''" controls="controls" style="width:100%;">
+        您的浏览器不支持 video 标签。
+        </video>
+      </div>
       <h3>理货商品</h3>
       <el-table border :data="temp ? temp.goods_details : []">
         <el-table-column property="sku_id" label="商品品类id"></el-table-column>
@@ -189,11 +197,23 @@
 import { manageList, manageDetails } from '@/api/operate'
 import { deviceList } from '@/api/device'
 import Pagination from '@/components/Pagination'
+// import myVideo from 'vue-video'
 export default {
   name: 'Settle',
   components: { Pagination },
   data() {
     return {
+      video: {
+          sources: [{
+              src: '',
+              type: 'video/mp4'
+          }],
+          options: {
+              autoplay: true,
+              volume: 0.6,
+              poster: 'http://covteam.u.qiniudn.com/poster.png'
+          }
+      },
       selectLoading: false,
       tableData: [],
       tableKey: 0,
@@ -227,21 +247,6 @@ export default {
     this.getList();
   },
   methods: {
-    getSelect() {
-      deviceList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let list = [];
-        res.data.list.forEach(v => {
-          list.push({label: v.device_name, value: v.device_code});
-        });
-        this.device_format = list;
-        this.getList()
-      });
-    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
@@ -282,6 +287,11 @@ export default {
       this.dialogFormVisible = true
       manageDetails({operation_id: row.operation_id}).then(res => {
         this.temp = res.data;
+        if (this.temp.pic_info.show_type == 2) {
+          setTimeout(() => {
+            document.querySelector('video').load();
+          }, 5000);
+        }
       });
     },
     handleReset() {

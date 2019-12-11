@@ -22,23 +22,10 @@
             </el-select>
             <el-input v-model="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
             <el-input v-model="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-            <el-select
-              style="width: 200px"
-              v-model="searchQuery.company_id"
-              filterable
-              remote
-              reserve-keyword
-              placeholder="请输入商家名称"
-              :remote-method="remoteMethod"
-              :loading="selectLoading">
-              <el-option
-                v-for="item in company_id_format"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value">
-              </el-option>
+            <el-select v-model="searchQuery.type" clearable style="width: 150px" class="filter-item" placeholder="请选择异常类型">
+              <el-option v-for="item in type_format" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
-            <el-select v-model="searchQuery.state" clearable style="width: 150px" class="filter-item" placeholder="请选择订单状态">
+            <el-select v-model="searchQuery.state" clearable style="width: 150px" class="filter-item" placeholder="请选择处理状态">
               <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </div>
@@ -65,9 +52,13 @@
             <el-button class="filter-item" type="default" @click="handleReset">
               重置
             </el-button>
+            <el-button :loading="downloadLoading" class="filter-item" type="default" @click="handleDownload">
+              导出
+            </el-button>
           </div>
         </el-col>
       </el-row>
+      
     </div>
     <el-table
       :data="tableData"
@@ -77,14 +68,6 @@
       <el-table-column
         prop="order_no" 
         label="订单号">
-      </el-table-column>
-      <el-table-column
-        prop="order_title" 
-        label="订单信息">
-      </el-table-column>
-      <el-table-column
-        prop="company_name" 
-        label="商家名称">
       </el-table-column>
       <el-table-column
         prop="device_code" 
@@ -99,30 +82,14 @@
         label="用户id">
       </el-table-column>
       <el-table-column
-        prop="payback_time" 
-        label="支付时间">
-      </el-table-column>
-      <el-table-column
         prop="create_time" 
-        label="申请时间">
+        label="创建时间">
       </el-table-column>
       <el-table-column
-        prop="goods_num" 
-        label="商品数量">
-      </el-table-column>
-      <el-table-column
-        prop="total_cost" 
-        label="金额">
-      </el-table-column>
-      <el-table-column
-        prop="reject_money" 
-        label="申请金额">
-      </el-table-column>
-      <el-table-column
-        prop="refund_state" 
-        label="退款状态">
+        prop="type" 
+        label="异常类型">
         <template slot-scope="scope">
-          <span>{{ refund_state[scope.row.refund_state] }}</span>
+          <span>{{ type[scope.row.type] }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -133,18 +100,18 @@
         </template>
       </el-table-column>
       <el-table-column
-        prop="operator" 
-        label="操作人">
+        prop="operator_user" 
+        label="处理人">
       </el-table-column>
       <el-table-column
-        prop="op_time" 
-        label="操作时间">
+        prop="operate_time" 
+        label="处理时间">
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-            <div style="white-space:nowrap;">
-              <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
-            </div>
+          <div style="white-space:nowrap;">
+            <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -153,30 +120,10 @@
     </div>
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
-      <h3>退款信息</h3>
+      <h3>异常订单详情</h3>
       <el-row>
-        <el-col :span="24"><div class="lh30">订单号：{{temp ? temp.order_no : ''}}</div></el-col>
-      </el-row>
-      <el-row v-if="temp && temp.reject_state == 0">
-        <el-col :span="6"><div class="lh30">订单金额：{{temp ? temp.total_cost : ''}}</div></el-col>
-        <el-col :span="6"><div class="lh30">退款金额：{{temp ? temp.reject_money : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">退款商品数：{{temp ? temp.reject_num : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">状态：{{temp ? order_state[temp.state] : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">退款状态：{{temp ? state[temp.reject_state] : ''}}</div></el-col>
-      </el-row>
-      <el-row v-if="temp && temp.reject_state == 1">
-        <el-col :span="6"><div class="lh30">订单金额：{{temp ? temp.total_cost : ''}}</div></el-col>
-        <el-col :span="6"><div class="lh30">退款金额：{{temp ? temp.reject_money : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">退款商品数：{{temp ? temp.reject_num : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">状态：{{temp ? order_state[temp.state] : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">退款状态：{{temp ? state[temp.reject_state] : ''}}</div></el-col>
-      </el-row>
-      <el-row v-if="temp && temp.reject_state == 2">
-        <el-col :span="6"><div class="lh30">订单金额：{{temp ? temp.total_cost : ''}}</div></el-col>
-        <el-col :span="6"><div class="lh30">退款金额：{{temp ? temp.reject_money : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">退款商品数：{{temp ? temp.reject_num : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">状态：{{temp ? order_state[temp.state] : ''}}</div></el-col>
-        <el-col :span="4"><div class="lh30">退款状态：{{temp ? state[temp.reject_state] : ''}}</div></el-col>
+        <el-col :span="12"><div class="lh30">异常订单号：{{temp ? temp.operation_id : ''}}</div></el-col>
+        <el-col :span="12"><div class="lh30">处理状态：{{temp ? state[temp.state] : ''}}</div></el-col>
       </el-row>
       <div v-if="temp && temp.pic_info.show_type == 1">
       <h3>消费前</h3>
@@ -256,40 +203,55 @@
         您的浏览器不支持 video 标签。
         </video>
       </div>
-      <h3>关联商品</h3>
-      <el-table border :data="temp ? temp.order_details : []" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" v-if="temp && temp.reject_state == 0"></el-table-column>
+      <el-row style="margin: 10px 0;">
+        <el-col :span="12"><h3>关联商品</h3></el-col>
+        <el-col :span="12" style="text-align: right;" v-if="temp && temp.state == 0">
+          <el-select
+            v-model="value"
+            filterable
+            remote
+            reserve-keyword
+            placeholder="请输入商品名称"
+            :remote-method="remoteMethod3"
+            :loading="loading">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+          <el-button type="primary" @click="addToList">添加</el-button>
+        </el-col>
+      </el-row>
+      
+      <el-table border :data="temp ? temp.detect_info : []" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" v-if="temp && temp.state == 0"></el-table-column>
         <el-table-column property="sku_id" label="SKUID"></el-table-column>
         <el-table-column property="goods_name" label="商品名称"></el-table-column>
         <el-table-column property="cost" label="成本"></el-table-column>
         <el-table-column property="price" label="价格"></el-table-column>
-        <el-table-column property="num" label="数量"></el-table-column>
-        <el-table-column property="reject_label" label="">
-          <template slot-scope="scope">
-            <span style="color:red;">{{ scope.row.reject_label == 1 ? '退' : '' }}</span>
-          </template>
-        </el-table-column>
       </el-table>
-      <div slot="footer" class="dialog-footer" v-if="temp && temp.reject_state == 0">
-        <el-button :loading="btnLoading" @click="dealData('re')">
-          驳回
+
+      <div slot="footer" class="dialog-footer" v-if="temp && temp.state == 0">
+        <el-button :loading="btnLoading" @click="closeDeal()">
+          关闭该单
         </el-button>
         <el-button type="primary" :loading="btnLoading" @click="dealData()">
-          确认退款
+          确认扣款
         </el-button>
       </div>
     </el-dialog>
-    
   </div>
 </template>
 
 <script>
-import { rejectList, rejectDetails, rejectDeal } from '@/api/order'
-import { merchantList } from '@/api/merchant'
+import { abnormalList, abnormalDetails, abnormalDeal } from '@/api/order'
 import { deviceList } from '@/api/device'
+import { goodsList } from '@/api/goods'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Reject',
+  name: 'ErrorSJ',
   components: { Pagination },
   data() {
     return {
@@ -310,88 +272,41 @@ export default {
         device_code: '',
         order_no: '',
         uid: '',
-        company_id: '',
+        type: '',
         state: '',
         start_time: '',
         end_time: ''
       },
+      multipleSelection: [],
       state: {
-        0: '未处理',
-        1: '已退款',
-        2: '已驳回'
+        0: '待处理',
+        1: '已处理',
       },
-      state_format: [{label: '未处理', value: 0}, {label: '已退款', value: 1}, {label: '已驳回', value: 2}],
-      refund_state: {
-        0: '未退款',
-        1: '已退款'
+      state_format: [{label: '待处理', value: 0}, {label: '已处理', value: 1}],
+      type: {
+        1: 'ai识别疑问',
+        2: '开关门数据异常'
       },
-      refund_state_format: [{label: '未退款', value: 0}, {label: '已退款', value: 1}],
-      order_state: ["未完成", "已支付", "退款中", "已退款"],
+      type_format: [{label: 'ai识别疑问', value: 1}, {label: '开关门数据异常', value: 2}],
       device_format: [],
-      company_id_format: [],
       temp: null,
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
-        update: '退款详情',
+        update: '异常订单详情',
         create: ''
       },
       dialogPvVisible: false,
-      multipleSelection: [],
+      options: [],
+      value: '',
+      loading: false,
+      goods_list: []
     }
   },
   created() {
     this.getList();
   },
   methods: {
-    getSelect() {
-      merchantList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let list = [];
-        res.data.list.forEach(v => {
-          list.push({label: v.company_name, value: v.company_id});
-        });
-        this.company_id_format = list;
-        deviceList({
-          page_size: 100,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc'
-        }).then(res2 => {
-          let list2 = [];
-          res2.data.list.forEach(v => {
-            list2.push({label: v.device_name, value: v.device_code});
-          });
-          this.device_format = list2;
-          this.getList()
-        });
-      });
-    },
-    remoteMethod(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
-          });
-          this.company_id_format = list;
-        });
-      } else {
-        this.company_id_format = [];
-      }
-    },
     remoteMethod2(query) {
       if (query !== '') {
         this.selectLoading = true;
@@ -413,22 +328,44 @@ export default {
         this.device_format = [];
       }
     },
+    remoteMethod3(query) {
+      if (query !== '') {
+        this.loading = true;
+        let data = {
+          page_size: 10,
+          page_index: 1,
+          order_by: '',
+          order_type: 'desc',
+          search: JSON.stringify({goods_name: query})
+        };
+        goodsList(data).then(res => {
+          this.loading = false;
+          let list = [];
+          this.goods_list = res.data.list;
+          res.data.list.forEach(v => {
+            list.push({label: v.goods_name, value: v.sku_id});
+          });
+          this.options = list;
+        });
+      } else {
+        this.options = [];
+      }
+    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
       data.search = JSON.stringify(this.searchQuery);
-      rejectList(data).then(res => {
+      abnormalList(data).then(res => {
         this.listLoading = false;
         this.tableData = res.data.list;
         this.total = res.data.total;
       });
     },
     handleDetail(row) {
-      this.temp = null;
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
-      rejectDetails({order_no: row.order_no}).then(res => {
-        this.temp = res.data.order_info;
+      abnormalDetails({operation_id: row.operation_id}).then(res => {
+        this.temp = res.data;
       });
     },
     handleReset() {
@@ -442,8 +379,8 @@ export default {
         device_code: '',
         order_no: '',
         uid: '',
-        company_id: '',
         state: '',
+        type: '',
         start_time: '',
         end_time: ''
       };
@@ -455,44 +392,32 @@ export default {
     },
     handleDownload() {
       this.downloadLoading = true
+      let data = Object.assign({}, this.listQuery);
+      data.search = JSON.stringify(this.searchQuery);
+      data.download = 1;
+      abnormalList(data).then(res => {
+        this.downloadLoading = false;
+        var alink = document.createElement("a");
+        alink.href = res;
+        alink.click();
+      });
     },
     handleSelectionChange(val) {
       this.multipleSelection = val;
     },
-    dealData(re) {
-      let data = {
-        order_no: this.temp.order_no
-      };
-      let arr = [];
+    //关闭该单
+    closeDeal() {
       this.btnLoading = true;
-      if (!re) {
-        if (this.multipleSelection.length) {
-          this.multipleSelection.forEach(v => {
-            let has = false;
-            if (arr.length) {
-              arr.forEach(k => {
-                if (k.sku_id == v.sku_id) {
-                  has = true;
-                  k.num += 1;
-                }
-              });
-              if (has) {
-                arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
-              }
-            } else {
-              arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
-            }
-            
-          });
-        }
-        data.refund_info = JSON.stringify(arr);
-      }
-      this.$confirm('是否对该订单进行' + (re ? '驳回' : '退款') + '?', '提示', {
+      let data = {
+        operation_id: this.temp.operation_id,
+        deal_result: ''
+      };
+      this.$confirm('是否关闭该异常订单?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        rejectDeal(data).then(res => {
+        abnormalDeal(data).then(res => {
           this.btnLoading = false;
           this.getList();
           this.dialogFormVisible = false
@@ -506,7 +431,49 @@ export default {
       }).catch(() => {
         this.btnLoading = false;    
       });
-    }
+    },
+    dealData() {
+      let data = {
+        operation_id: this.temp.operation_id
+      };
+      let arr = [];
+      if (this.multipleSelection.length) {
+        this.multipleSelection.forEach(v => {
+          arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+        });
+      }
+      data.deal_result = JSON.stringify(arr);
+      this.btnLoading = true;
+      this.$confirm('是否对该异常订单进行扣款?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        abnormalDeal(data).then(res => {
+          this.btnLoading = false;
+          this.getList();
+          this.dialogFormVisible = false
+          this.$notify({
+            title: '提示',
+            message: '处理成功',
+            type: 'success',
+            duration: 2000
+          })
+        });
+      }).catch(() => {
+        this.btnLoading = false;    
+      });
+    },
+    addToList() {
+      if (this.value) {
+        this.goods_list.forEach(v => {
+          if (v.sku_id === this.value) {
+            this.temp.detect_info.push(v);
+          }
+        });
+        this.value = '';
+      }
+    },
   }
 }
 </script>
@@ -533,12 +500,12 @@ export default {
   .myDialog .lh30 {
     line-height: 30px;
   }
+  .mb10 {
+    padding-bottom: 10px;
+  }
   .image-size {
     width: 200px;
     height: 150px;
-  }
-  .mb10 {
-    padding-bottom: 10px;
   }
   .image-slot {
     display: flex;

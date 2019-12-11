@@ -80,12 +80,10 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">编辑</el-button>
-          <el-button
-            size="mini"
-            @click="handleRemove(scope.row)">移除</el-button>
+            <div style="white-space:nowrap;">
+              <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
+              <el-link type="primary" @click="handleRemove(scope.row)">移除</el-link>
+            </div>
         </template>
       </el-table-column>
     </el-table>
@@ -327,5 +325,8 @@ export default {
   .img {
     width: 50px;
     height: 50px;
+  }
+  .el-link.el-link--primary {
+    margin-right: 10px;
   }
 </style>

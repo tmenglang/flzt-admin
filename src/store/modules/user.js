@@ -68,14 +68,15 @@ const actions = {
 
   menu({ commit }) {
     return new Promise((resolve, reject) => {
-      userMenu({system: 1}).then(res => {
+      userMenu({system: 1}).then(res => { //总后台
+      // userMenu({system: 2}).then(res => { //商家后台
         // let routes = recursionRouter(res.data, changeRouter);
         // let newMenu = constantRoutes.concat(routes);
         commit('SET_ROUTER', JSON.stringify(res.data));
         setRouter(JSON.stringify(res.data));
         // router.options.routes = newMenu;
         // router.addRoutes(newMenu);
-        resolve()
+        resolve(res.data)
       }).catch(error => {
         reject(error)
       })
@@ -87,6 +88,8 @@ const actions = {
     return new Promise(resolve => {
       commit('SET_TOKEN', '')
       removeToken()
+      resetRouter()
+      removeFlash()
       resolve()
     })
   }

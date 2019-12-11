@@ -3,6 +3,7 @@
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
+        <!-- <h3 class="title">商家管理后台</h3> -->
         <h3 class="title">商家总后台</h3>
       </div>
 
@@ -111,10 +112,16 @@ export default {
         if (valid) {
           this.loading = true
           let data = Object.assign({}, this.loginForm);
+          //总后台
           data.system = 1;
+          //商家后台
+          // data.system = 2;
           this.$store.dispatch('user/login', data).then(() => {
-            this.$store.dispatch('user/menu').then(() => {
-              this.loading = false
+            this.$store.dispatch('user/menu').then((res) => {
+              console.log(res);
+              this.loading = false;
+              // let path = res[0].child_menu[0].url;
+              // localStorage.setItem('redirect', path);
               this.$router.push({path: '/'})
               // this.$router.push({ path: this.redirect || '/' })
             })

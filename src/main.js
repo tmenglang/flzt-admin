@@ -16,6 +16,12 @@ import request from './utils/request'
 import '@/icons' // icon
 import '@/permission' // permission control
 
+import { pcaa } from 'area-data-vue'
+import VueAreaLinkage from 'area-linkage-vue'
+import 'area-linkage-vue/dist/index.css'
+Vue.prototype.$pcaa = pcaa
+Vue.use(VueAreaLinkage)
+
 /**
  * If you don't want to use mock-server
  * you want to use MockJs for mock api

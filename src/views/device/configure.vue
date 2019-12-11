@@ -75,9 +75,9 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleDetail(scope.row)">详情</el-button>
+            <div style="white-space:nowrap;">
+              <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
+            </div>
         </template>
       </el-table-column>
     </el-table>
@@ -111,11 +111,13 @@
     </el-dialog>
     <el-dialog title="选择货柜" :visible.sync="dialogTableVisible">
       <el-row>
-        <el-col :span="12"><div><el-button type="primary" plain style="margin-right: 20px;" @click="selectDeviceAll()">全选</el-button>已选 {{selectedAmount}} </div></el-col>
+        <el-col :span="12"><div>已选 {{selectedAmount}} </div></el-col>
         <el-col :span="12"><div style="text-align: right;"><el-input v-model="deviceSearchQuery.device_code" placeholder="货柜编号" style="width: 300px;" /><el-button type="primary" @click="getDeviceList()">确 定</el-button></div></el-col>
       </el-row>
       <el-table
+        ref="multipleTable"
         :data="deviceData"
+        height="300"
         border  
         v-loading="deviceLoading" 
         @selection-change="handleSelectionChange" 
@@ -151,8 +153,8 @@
         </el-button>
       </div>
     </el-dialog>
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 80%; margin-left:50px;">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 90%; margin-left:50px;">
         <el-form-item label="选择货柜" prop="device_code">
           <el-button type="primary" @click="openDeviceList()">请选择货柜</el-button>
           <el-input
@@ -160,7 +162,6 @@
             :rows="2"
             class="text-area" 
             placeholder="请选择货柜"
-            disabled
             v-model="temp.device_code">
           </el-input>
         </el-form-item>
@@ -226,7 +227,7 @@
 </template>
 
 <script>
-import { deviceConf, deviceList } from '@/api/device'
+import { deviceConf, deviceList, deviceAddconf } from '@/api/device'
 import { merchantList } from '@/api/merchant'
 import Pagination from '@/components/Pagination'
 export default {
@@ -260,7 +261,7 @@ export default {
       device_total: 0,
       deviceLoading: true,
       deviceQuery: {
-        page_size: 10,
+        page_size: 10000,
         page_index: 1,
         order_by: '',
         order_type: 'desc'
@@ -273,6 +274,7 @@ export default {
       detail: {},
       deviceIsError: [{value: 0, label: '无效'}, {value: 1, label: '有效'}],
       temp: {
+        device_code: '',
         netIp: '',
         netKey: '',
         hostIp: '',
@@ -296,13 +298,9 @@ export default {
         update: '配置详情',
         create: '新增配置'
       },
-      dialogPvVisible: false,
       rules: {
-        device_code: [{ required: true, message: '请选择货柜' }]
-      },
-      qrcode: null,
-      centerDialogVisible: false,
-      device_img: ''
+        device_code: [{ required: true, message: '请选择货柜', trigger: 'blur' }]
+      }
     }
   },
   created() {
@@ -311,7 +309,11 @@ export default {
   methods: {
     openDeviceList() {
       this.dialogTableVisible = true;
-      this.getDeviceList();
+      if (this.device_total === 0) {
+        this.getDeviceList();
+      } else {
+        this.toggleSelection(this.multipleSelection);
+      }
     },
     getDeviceList() {
       this.deviceLoading = true;
@@ -323,13 +325,30 @@ export default {
         this.device_total = res.data.total;
       });
     },
-    selectDeviceAll() {
-      this.selectedAmount = this.device_total;
+    selectDevice() {
+      let arr = [];
+      if (this.selectedAmount > 0) {
+        this.multipleSelection.forEach(v => {
+          arr.push(v.device_code);
+        })
+        this.temp.device_code = arr.join(',');
+      } else {
+        this.temp.device_code = '';
+      }
+      this.dialogTableVisible = false;
     },
-    selectDevice() {},
     handleSelectionChange(val) {
       this.multipleSelection = val;
       this.selectedAmount = val.length;
+    },
+    toggleSelection(rows) {
+      if (rows) {
+        rows.forEach(row => {
+          this.$refs.multipleTable.toggleRowSelection(row);
+        });
+      } else {
+        this.$refs.multipleTable.clearSelection();
+      }
     },
     remoteMethod(query) {
       if (query !== '') {
@@ -364,6 +383,7 @@ export default {
     },
     resetTemp() {
       this.temp = {
+        device_code: '',
         netIp: '',
         netKey: '',
         hostIp: '',
@@ -393,7 +413,6 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          this.temp.id = '' // mock a id
           this.btnLoading = true;
           deviceAddconf(this.temp).then(() => {
             this.btnLoading = false;
@@ -413,35 +432,7 @@ export default {
       this.detail = Object.assign({}, row) // copy obj
       this.dialogDetailVisible = true;
     },
-    updateData() {
-      this.$refs['dataForm'].validate((valid) => {
-        if (valid) {
-          const tempData = {
-            id: this.temp.id,
-            company_id: this.temp.company_id,
-            device_name: this.temp.device_name,
-            device_type: this.temp.device_type,
-            device_model: this.temp.device_model,
-            device_state: this.temp.device_state,
-            is_online: this.temp.is_online,
-            location: this.temp.location,
-            pay_type: this.temp.pay_type
-          }
-          this.btnLoading = true;
-          updateDevice(tempData).then(() => {
-            this.btnLoading = false;
-            this.getList();
-            this.dialogFormVisible = false
-            this.$notify({
-              title: '提示',
-              message: '更新成功',
-              type: 'success',
-              duration: 2000
-            })
-          })
-        }
-      })
-    },
+    
     handleReset() {
       this.listQuery = {
         page_size: 20,
@@ -466,53 +457,12 @@ export default {
       let data = Object.assign({}, this.listQuery);
       data.search = JSON.stringify(this.searchQuery);
       data.download = 1;
-      deviceList(data).then(res => {
+      deviceConf(data).then(res => {
         this.downloadLoading = false;
         var alink = document.createElement("a");
         alink.href = res;
         alink.click();
       });
-    },
-    downloadImg(item) {
-      //this.centerDialogVisible = true;
-      // if (!this.qrcodeObj) {
-      //   setTimeout(() => {
-      //     this.qrcodeObj = new QRCode('qrcode', {
-      //         width: 200, //图像宽度
-      //         height: 200, //图像高度
-      //         colorDark : "#000000", //前景色
-      //         colorLight : "#ffffff", //背景色
-      //         typeNumber:4, 
-      //         correctLevel : QRCode.CorrectLevel.H //容错级别 容错级别有：（1）QRCode.CorrectLevel.L （2）QRCode.CorrectLevel.M （3）QRCode.CorrectLevel.Q （4）QRCode.CorrectLevel.H
-      //     });
-      //     this.qrCode('device_code=' + item.device_code);
-      //   }, 500);
-      // } else {
-      //   this.qrCode('device_code=' + item.device_code);
-      // }
-      let data = {
-        device_code: item.device_code
-      };
-      fileQrcode(data).then(res => {
-        this.device_img = res;
-        var alink = document.createElement("a");
-        alink.href = res.split('src="')[1].split('" />')[0];
-        alink.download = item.device_code; //图片名
-        alink.click();
-      });
-    },
-    // qrCode (url) {
-      
-    //     this.qrcodeObj.clear() //清除二维码 
-    //     this.qrcodeObj.makeCode(url) //生成另一个新的二维码
-      
-    // },
-    downs() {
-      var alink = document.createElement("a");
-      alink.href = this.$refs.qrcode.children[1].src;
-      alink.download = this.$refs.qrcode.title.split('=')[1]; //图片名
-      alink.click();
-      this.centerDialogVisible = false
     }
   }
 }
@@ -527,16 +477,12 @@ export default {
   .fr {
     float: right;
   }
-  #qrcode {
-    width: 240px;
-    height: 240px;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 20px;
-    margin: 20px auto;
+  .myDialog .el-dialog__body {
+    padding: 10px 20px;
   }
-
+  .myDialog h3 {
+    margin: 10px 0;
+  }
   .text-area .el-textarea__inner{
     margin-top: 10px;
   }

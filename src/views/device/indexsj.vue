@@ -2,22 +2,6 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-model="searchQuery.device_name" placeholder="货柜名称/货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select
-        style="width: 200px"
-        v-model="searchQuery.company_id"
-        filterable
-        remote
-        reserve-keyword
-        placeholder="请输入商家名称"
-        :remote-method="remoteMethod"
-        :loading="selectLoading">
-        <el-option
-          v-for="item in options"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
       <el-select v-model="searchQuery.device_type" placeholder="货柜类型" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
@@ -30,9 +14,6 @@
       <el-select v-model="searchQuery.is_online" placeholder="在线状态" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in is_online" :key="item" :label="item" :value="item" />
       </el-select>
-      <!-- <el-select v-model="searchQuery.pay_type" placeholder="付款方式" clearable style="width: 120px" class="filter-item">
-        <el-option v-for="item in pay_type" :key="item" :label="item" :value="item" />
-      </el-select> -->
       
       <el-button class="filter-item" type="primary" @click="handleFilter">
         筛选
@@ -43,9 +24,6 @@
       <el-button :loading="downloadLoading" class="filter-item" type="default" @click="handleDownload">
         导出
       </el-button>
-      <!-- <el-button class="filter-item" style="margin-left: 10px; float: right;" type="primary" icon="el-icon-edit" @click="handleCreate">
-        新增
-      </el-button> -->
     </div>
     <el-table
       :data="tableData"
@@ -96,10 +74,6 @@
         </template>
       </el-table-column>
       <el-table-column
-        prop="company_name" 
-        label="所属商家">
-      </el-table-column>
-      <el-table-column
         prop="location" 
         label="地址">
       </el-table-column>
@@ -124,24 +98,6 @@
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 90%; margin-left:50px;">
         <el-form-item label="货柜名称" prop="device_name">
           <el-input v-model="temp.device_name" placeholder="请输入货柜名称" />
-        </el-form-item>
-        <el-form-item label="所属商家" prop="company_id">
-          <el-select
-            style="width: 200px"
-            v-model="temp.company_id"
-            filterable
-            remote
-            reserve-keyword
-            placeholder="请输入商家名称"
-            :remote-method="remoteMethod2"
-            :loading="selectLoading">
-            <el-option
-              v-for="item in company_id_format"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
         </el-form-item>
         <el-form-item label="设备类型" prop="device_type">
           <el-select v-model="temp.device_type" class="filter-item" placeholder="请选择">
@@ -225,7 +181,7 @@ import { merchantList } from '@/api/merchant'
 import Pagination from '@/components/Pagination'
 import QRCode from 'qrcodejs2'
 export default {
-  name: 'Device',
+  name: 'DeviceSJ',
   components: { Pagination },
   data() {
     return {
@@ -244,12 +200,10 @@ export default {
       },
       searchQuery: {
         device_name: '',
-        company_id: '',
         device_model: '',
         device_type: '',
         device_state: '',
         is_online: ''
-        //pay_type: ''
       },
       device_type: [],
       device_state: [],
@@ -261,15 +215,9 @@ export default {
       device_model_format: [],
       is_online_format: [],
       pay_type_format: [],
-      company_id_format: [],
       options: [],
-      province_format: [{value: 1, label: '广东'}],
-      city_format: [{value: 1, label: '深圳'}],
-      area_format: [{value: 1, label: '南山区'}],
-      street_format: [{value: 1, label: '前海街道'}],
       temp: {
         id: undefined,
-        company_id: '',
         device_name: '',
         device_type: '',
         device_model: '',
@@ -290,7 +238,6 @@ export default {
       dialogPvVisible: false,
       rules: {
         device_name: [{ required: true, message: '请输入货柜名称', trigger: 'blur' }],
-        company_id: [{ required: true, message: '抢选择所属商家', trigger: 'change' }],
         device_type: [{ required: true, message: '请选择设备类型', trigger: 'change' }],
         device_model: [{ required: true, message: '请选择设备型号', trigger: 'change' }],
         device_state: [{ required: true, message: '请选择设备状态', trigger: 'change' }],
@@ -303,7 +250,7 @@ export default {
     }
   },
   created() {
-    this.getMerchant();
+    this.getSelect();
   },
   methods: {
     getSelect() {
@@ -345,64 +292,6 @@ export default {
     bindChange(e) {
       this.temp.selected = e
     },
-    getMerchant() {
-      let params = {
-        page_size: 1000,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc',
-      };
-      merchantList(params).then(res => {
-        let r = [];
-        res.data.list.forEach(v => {
-          r.push({label: v.company_name, value: v.id});
-        });
-        this.company_id_format = r;
-        this.getSelect();
-      });
-    },
-    remoteMethod(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
-          });
-          this.options = list;
-        });
-      } else {
-        this.options = [];
-      }
-    },
-    remoteMethod2(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: parseInt(v.id)});
-          });
-          this.company_id_format = list;
-        });
-      } else {
-        this.company_id_format = [];
-      }
-    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
@@ -416,7 +305,6 @@ export default {
     resetTemp() {
       this.temp = {
         id: undefined,
-        company_id: '',
         device_name: '',
         device_type: '',
         device_model: '',
@@ -444,7 +332,6 @@ export default {
         if (valid) {
           const tempData = {
             id: this.temp.id,
-            company_id: this.temp.company_id,
             device_name: this.temp.device_name,
             device_type: this.temp.device_type,
             device_model: this.temp.device_model,
@@ -484,12 +371,10 @@ export default {
       };
       this.searchQuery =  {
         device_name: '',
-        company_id: '',
         device_model: '',
         device_type: '',
         device_state: '',
         is_online: ''
-        //pay_type: ''
       };
       this.getList();
     },

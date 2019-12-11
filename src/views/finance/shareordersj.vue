@@ -2,22 +2,6 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-model="searchQuery.id" placeholder="分账号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select
-        style="width: 200px"
-        v-model="searchQuery.company_id"
-        filterable
-        remote
-        reserve-keyword
-        placeholder="请输入商家名称"
-        :remote-method="remoteMethod"
-        :loading="selectLoading">
-        <el-option
-          v-for="item in company_id_format"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
       <el-select v-model="searchQuery.state" placeholder="状态" clearable style="width: 150px" class="filter-item">
         <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
@@ -55,10 +39,6 @@
       <el-table-column
         prop="id" 
         label="分账号">
-      </el-table-column>
-      <el-table-column
-        prop="company_name" 
-        label="公司名称">
       </el-table-column>
       <el-table-column
         prop="day_no" 
@@ -163,11 +143,10 @@
 </template>
 
 <script>
-import { merchantList } from '@/api/merchant'
 import { shareList, shareOrder } from '@/api/finance'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'ShareOrder',
+  name: 'ShareOrderSJ',
   components: { Pagination },
   data() {
     return {
@@ -185,12 +164,10 @@ export default {
       },
       searchQuery: {
         id: '',
-        company_id: '',
         state: '',
         start_time: '',
         end_time: ''
       },
-      company_id_format: [],
       state: {
           0: '分账中',
           1: '已分账'
@@ -217,21 +194,6 @@ export default {
     this.getList();
   },
   methods: {
-    getSelect() {
-      this.listLoading = true;
-      merchantList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let d = [];
-        res.data.list.forEach(v => {
-          d.push({label: v.company_name, value: v.id});
-        });
-        this.company_format = d;
-      });
-    },
     
     getList() {
       this.listLoading = true;
@@ -243,27 +205,6 @@ export default {
         this.total = res.data.total;
       });
     },
-    remoteMethod(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
-          });
-          this.company_id_format = list;
-        });
-      } else {
-        this.company_id_format = [];
-      }
-    },
     
     handleReset() {
       this.listQuery = {
@@ -274,7 +215,6 @@ export default {
       };
       this.searchQuery = {
         id: '',
-        company_id: '',
         state: '',
         start_time: '',
         end_time: ''

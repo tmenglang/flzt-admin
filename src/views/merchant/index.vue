@@ -39,9 +39,6 @@
             <el-button class="filter-item" type="default" @click="handleReset">
               重置
             </el-button>
-            <!-- <el-button :loading="downloadLoading" class="filter-item" type="default" @click="handleDownload">
-              导出
-            </el-button> -->
             <el-button class="filter-item" style="margin-left: 10px; float: right;" type="primary" icon="el-icon-edit" @click="handleCreate">
               新增
             </el-button>
@@ -98,7 +95,7 @@
       </el-table-column>
       <el-table-column
         prop="ledger_type" 
-        label="商家类型">
+        label="财务模式">
         <template slot-scope="scope">
           <span>{{ ledger_type[scope.row.ledger_type] }}</span>
         </template>
@@ -109,9 +106,9 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleUpdate(scope.row)">编辑</el-button>
+          <div style="white-space:nowrap;">
+            <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -119,8 +116,8 @@
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="120px" style="width: 800px; margin-left:50px;">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="130px" style="width: 90%; margin-left:50px;">
         <el-row>
           <el-col :span="12">
             <el-form-item label="商家名称" prop="company_name">
@@ -156,11 +153,12 @@
         </el-form-item>
         <el-form-item label="营业执照">
           <el-upload
-            action="https://portal.fsylit.com/file/upload"
+            action="https://testportal.fsylit.com/file/upload"
             list-type="picture-card" 
             :on-preview="handlePictureCardPreview"
             :on-success="handlePicSuccess" 
             accept=".jpg,.jpeg,.png,.bmp,.JPG,.JPEG,.BMP" 
+            :file-list="fileList"
             :on-remove="handleRemove">
             <i class="el-icon-plus"></i>
           </el-upload>
@@ -171,7 +169,7 @@
         <el-form-item label="商家logo">
           <el-upload
             class="avatar-uploader"
-            action="https://portal.fsylit.com/file/upload"
+            action="https://testportal.fsylit.com/file/upload"
             accept=".jpg,.jpeg,.png,.bmp,.JPG,.JPEG,.BMP" 
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
@@ -251,7 +249,7 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="支付宝账户" prop="alipay_account">
-              <el-input v-model="temp.wechat_period" placeholder="请输入支付宝账户" />
+              <el-input v-model="temp.alipay_account" placeholder="请输入支付宝账户" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -299,7 +297,7 @@
         </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">
+        <el-button @click="cancelOp()">
           取消
         </el-button>
         <el-button type="primary" :loading="btnLoading" @click="dialogStatus==='create' ? createData() : updateData()">
@@ -349,14 +347,34 @@ export default {
         1: '企业',
         2: '个体户'
       },
-      merchantType: [{label: '企业', value: 1}, {label: '个体户', value: 1}],
+      merchantType: [{label: '企业', value: 1}, {label: '个体户', value: 2}],
       ledger_type: {
         0: '关闭',
         1: '分账',
         2: '提现',
       },
       merchantLedger: [{label: '关闭', value: 0}, {label: '分账', value: 1}, {label: '提现', value: 2}],
-      merchantTrade: [],
+      merchantTrade: [
+        {value: 'A', label: '农、林、牧、渔业'},
+        {value: 'B', label: '采矿业'},
+        {value: 'C', label: '制造业'},
+        {value: 'D', label: '电力、热力、燃气及水生产和供应业'},
+        {value: 'E', label: '建筑业'},
+        {value: 'F', label: '批发和零售业'},
+        {value: 'G', label: '交通运输、仓储和邮政业'},
+        {value: 'H', label: '住宿和餐饮业'},
+        {value: 'I', label: '信息传输、软件和技术服务业'},
+        {value: 'J', label: '金融业K 房地产业'},
+        {value: 'L', label: '租赁和商务服务业'},
+        {value: 'M', label: '科学研究和技术服务业'},
+        {value: 'N', label: '水利、环境和公共设施管理业'},
+        {value: 'O', label: '居民服务、修理和其他服务业'},
+        {value: 'P', label: '教育'},
+        {value: 'Q', label: '卫生和社会工作'},
+        {value: 'R', label: '文化、体育和娱乐业'},
+        {value: 'S', label: '公共管理、社会保障和社会组织'},
+        {value: 'T', label: '国际组织'}
+      ],
       temp: {
         id: undefined,
         company_name: '',
@@ -364,7 +382,26 @@ export default {
         addr: '',
         state: '',
         link_user: '',
-        remarks: ''
+        remarks: '',
+        type: '',
+        trade: '',
+        identity_pic1: '',
+        identity_pic2: '',
+        logo_pic: '',
+        link_email: '',
+        service_tel: '',
+        ledger_type: '',
+        ratio: '',
+        wechat_account: '',
+        wechat_user: '',
+        wechat_period: '',
+        alipay_account: '',
+        alipay_user: '',
+        alipay_bank: '',
+        alipay_period: '',
+        cash_bank: '',
+        cash_bankid: '',
+        cash_user: ''
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -380,7 +417,8 @@ export default {
       imageUrl: '',
       dialogImageUrl: '',
       dialogVisible: false,
-      picList: []
+      picList: [],
+      fileList: []
     }
   },
   created() {
@@ -397,6 +435,10 @@ export default {
         this.total = res.data.total;
       });
     },
+    cancelOp() {
+      this.dialogFormVisible = false;
+      this.resetTemp();
+    },
     resetTemp() {
       this.temp = {
         id: undefined,
@@ -405,11 +447,32 @@ export default {
         addr: '',
         state: '',
         link_user: '',
-        remarks: ''
+        remarks: '',
+        type: '',
+        trade: '',
+        identity_pic1: '',
+        identity_pic2: '',
+        logo_pic: '',
+        link_email: '',
+        service_tel: '',
+        ledger_type: '',
+        ratio: '',
+        wechat_account: '',
+        wechat_user: '',
+        wechat_period: '',
+        alipay_account: '',
+        alipay_user: '',
+        alipay_bank: '',
+        alipay_period: '',
+        cash_bank: '',
+        cash_bankid: '',
+        cash_user: ''
       }
+      this.picList = this.fileList = [];
+      this.imageUrl = '';
     },
     handleCreate() {
-      this.resetTemp()
+      this.resetTemp();
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -422,10 +485,14 @@ export default {
         if (valid) {
           this.btnLoading = true;
           this.temp.id = '' // mock a id
+          this.temp.identity_pic1 = this.picList[0];
+          this.temp.identity_pic2 = this.picList[1] || '';
+          this.temp.logo_pic = this.imageUrl;
           createMerchant(this.temp).then(() => {
             this.btnLoading = false;
             this.getList();
             this.dialogFormVisible = false
+            this.resetTemp();
             this.$notify({
               title: '提示',
               message: '创建成功',
@@ -437,6 +504,13 @@ export default {
       })
     },
     handleUpdate(row) {
+      this.imageUrl = row.logo_pic;
+      this.fileList = [{name: '图片1', url: row.identity_pic1}]
+      this.picList = [row.identity_pic1];
+      if (row.identity_pic2) {
+        this.fileList[1] = {name: '图片2', url: row.identity_pic2};
+        this.picList[1] = row.identity_pic2;
+      }
       this.temp = Object.assign({}, row) // copy obj
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
@@ -454,19 +528,31 @@ export default {
             addr: this.temp.addr,
             state: this.temp.state,
             link_user: this.temp.link_user,
-            remarks: this.temp.remarks
+            remarks: this.temp.remarks,
+            type: this.temp.type,
+            trade: this.temp.trade,
+            identity_pic1: this.picList[0],
+            identity_pic2: this.picList[1],
+            logo_pic: this.imageUrl,
+            link_email: this.temp.link_email,
+            service_tel: this.temp.service_tel,
+            ledger_type: this.temp.ledger_type,
+            ratio: this.temp.ratio,
+            wechat_account: this.temp.wechat_account,
+            wechat_user: this.temp.wechat_user,
+            wechat_period: this.temp.wechat_period,
+            alipay_account: this.temp.alipay_account,
+            alipay_user: this.temp.alipay_user,
+            alipay_bank: this.temp.alipay_bank,
+            alipay_period: this.temp.alipay_period,
+            cash_bank: this.temp.cash_bank,
+            cash_bankid: this.temp.cash_bankid,
+            cash_user: this.temp.cash_user
           }
           this.btnLoading = true;
           updateMerchant(tempData).then(() => {
             this.btnLoading = false;
             this.getList();
-            // for (const v of this.tableData) {
-            //   if (v.id === this.temp.id) {
-            //     const index = this.tableData.indexOf(v)
-            //     this.tableData.splice(index, 1, this.temp)
-            //     break
-            //   }
-            // }
             this.dialogFormVisible = false
             this.$notify({
               title: '提示',
@@ -505,7 +591,11 @@ export default {
       let l = [];
       if (fileList.length) {
         fileList.forEach(v => {
-          l.push(v.response.data.file_path);
+          if (v.response) {
+            l.push(v.response.data.file_path);
+          } else {
+            l.push(v.url);
+          }
         });
       }
       this.picList = l;
@@ -521,19 +611,14 @@ export default {
       this.dialogVisible = true;
     },
     handleAvatarSuccess(res, file) {
-      this.imageUrl = URL.createObjectURL(file.raw);
+      this.imageUrl = file.response.data.file_path;
     },
     beforeAvatarUpload(file) {
-      const isJPG = file.type === 'image/jpeg';
       const isLt2M = file.size / 1024 / 1024 < 2;
-
-      if (!isJPG) {
-        this.$message.error('上传头像图片只能是 JPG 格式!');
-      }
       if (!isLt2M) {
-        this.$message.error('上传头像图片大小不能超过 2MB!');
+        this.$message.error('上传Logo图片大小不能超过 2MB!');
       }
-      return isJPG && isLt2M;
+      return isLt2M;
     }
   }
 }
@@ -553,6 +638,12 @@ export default {
   }
   .row-bg {
     padding: 0 10px;
+  }
+  .myDialog .el-dialog__body {
+    padding: 10px 20px;
+  }
+  .myDialog h3 {
+    margin: 10px 0;
   }
   .avatar-uploader .el-upload {
     border: 1px dashed #d9d9d9;

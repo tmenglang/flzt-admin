@@ -4,7 +4,7 @@
       <el-row :gutter="24">
         <el-col :span="24">
           <div class="mb10">
-              <el-input v-model="searchQuery.device_name" placeholder="货柜名称/货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+              <el-input v-model="searchQuery.device_code" placeholder="货柜名称/货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
                 <el-select
                     style="width: 200px"
                     v-model="searchQuery.company_id"
@@ -143,15 +143,11 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            @click="handleDetail(scope.row)">详情</el-button>
-          <el-button
-            size="mini"
-            @click="openLock(scope.row)">开锁</el-button>
-          <el-button
-            size="mini"
-            @click="onloadDevice(scope.row)">重启</el-button>
+            <div style="white-space:nowrap;">
+              <el-link type="primary" @click="handleDetail(scope.row)">明细</el-link>
+              <el-link type="primary" @click="openLock(scope.row)">开锁</el-link>
+              <el-link type="primary" @click="onloadDevice(scope.row)">重启</el-link>
+            </div>
         </template>
       </el-table-column>
     </el-table>
@@ -162,7 +158,7 @@
 </template>
 
 <script>
-import { deviceState, deviceSelect } from '@/api/device'
+import { deviceState, deviceSelect, deviceOperate } from '@/api/device'
 import { merchantList } from '@/api/merchant'
 import Pagination from '@/components/Pagination'
 export default {
@@ -313,13 +309,47 @@ export default {
     },
     
     handleDetail(row) {
-      console.log(row);
+      this.$router.push({path:'/device/trouble',query:{device_code:row.device_code}});
     },
-    openLock() {
-      console.log(row);
+    openLock(row) {
+      this.$confirm('确定要对该设备进行开锁操作么?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        let data = {
+          op_type: 1,
+          device_code: row.device_code
+        };
+        deviceOperate(data).then(res => {
+          this.$message({
+            type: 'success',
+            message: '操作成功!'
+          });
+        });
+      }).catch(() => {
+        //       
+      });
     },
-    reloadDevice() {
-      console.log(row);
+    onloadDevice(row) {
+      this.$confirm('确定要对该设备进行重启操作么?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        let data = {
+          op_type: 2,
+          device_code: row.device_code
+        };
+        deviceOperate(data).then(res => {
+          this.$message({
+            type: 'success',
+            message: '操作成功!'
+          });
+        });
+      }).catch(() => {
+        //       
+      });
     },
     handleReset() {
       this.listQuery = {
@@ -373,13 +403,7 @@ export default {
   .mb10 {
       padding-bottom: 10px;
   }
-  #qrcode {
-    width: 240px;
-    height: 240px;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 20px;
-    margin: 20px auto;
+  .el-link.el-link--primary {
+    margin-right: 10px;
   }
 </style>

@@ -22,22 +22,6 @@
             </el-select>
             <el-input v-model="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
             <el-input v-model="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-            <el-select
-              style="width: 200px"
-              v-model="searchQuery.company_id"
-              filterable
-              remote
-              reserve-keyword
-              placeholder="请输入商家名称"
-              :remote-method="remoteMethod"
-              :loading="selectLoading">
-              <el-option
-                v-for="item in company_id_format"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value">
-              </el-option>
-            </el-select>
             <el-select v-model="searchQuery.state" clearable style="width: 150px" class="filter-item" placeholder="请选择订单状态">
               <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
@@ -86,10 +70,6 @@
       <el-table-column
         prop="order_title" 
         label="订单信息">
-      </el-table-column>
-      <el-table-column
-        prop="company_name" 
-        label="商家名称">
       </el-table-column>
       <el-table-column
         prop="device_code" 
@@ -240,29 +220,8 @@
         <el-table-column property="discount" label="优惠金额"></el-table-column>
         <el-table-column property="pay_money" label="实付金额"></el-table-column>
       </el-table>
-      <el-row style="margin: 10px 0;">
-        <el-col :span="12"><h3>订单关联商品</h3></el-col>
-        <el-col :span="12" style="text-align: right;" v-if="repairDefault">
-          <el-select
-            v-model="value"
-            filterable
-            remote
-            reserve-keyword
-            placeholder="请输入商品名称"
-            :remote-method="remoteMethod3"
-            :loading="loading">
-            <el-option
-              v-for="item in options"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
-          <el-button type="primary" @click="addToList">添加</el-button>
-        </el-col>
-      </el-row>
-      <el-table border :data="temp ? temp.goods_details : []" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" v-if="refundDefault || repairDefault"></el-table-column>
+      <h3>订单关联商品</h3>
+      <el-table border :data="temp ? temp.goods_details : []">
         <el-table-column property="sku_id" label="SKUID"></el-table-column>
         <el-table-column property="goods_name" label="商品名称"></el-table-column>
         <el-table-column property="sku_type_name" label="品类"></el-table-column>
@@ -272,32 +231,6 @@
         <el-table-column property="discount" label="优惠金额"></el-table-column>
         <el-table-column property="pay_money" label="实付金额"></el-table-column>
       </el-table>
-      <div slot="footer" class="dialog-footer" v-if="temp && temp.state == 1">
-        <div v-if="opDefault">
-          <el-button type="primary" @click="repairSubmit()">
-            补扣
-          </el-button>
-          <el-button type="primary" @click="refundSubmit()">
-            退款
-          </el-button>
-        </div>
-        <div v-if="refundDefault">
-          <el-button @click="cancelSubmit()">
-            取消
-          </el-button>
-          <el-button type="primary" @click="refundDealSubmit()">
-            确认退款
-          </el-button>
-        </div>
-        <div v-if="repairDefault">
-          <el-button @click="cancelSubmit()">
-            取消
-          </el-button>
-          <el-button type="primary" @click="repairDealSubmit()">
-            确认补扣
-          </el-button>
-        </div>
-      </div>
     </el-dialog>
   </div>
 </template>
@@ -305,19 +238,14 @@
 <script>
 import { orderList, orderDetails, repairDeal, refundDeal } from '@/api/order'
 import { dictInfo } from '@/api/material'
-import { merchantList } from '@/api/merchant'
 import { deviceList } from '@/api/device'
-import { goodsList } from '@/api/goods'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Order',
+  name: 'OrderSJ',
   components: { Pagination },
   data() {
     return {
       order_state: '',
-      opDefault: false,
-      refundDefault: false,
-      repairDefault: false,
       selectLoading: false,
       tableData: [],
       tableKey: 0,
@@ -334,7 +262,6 @@ export default {
         device_code: '',
         order_no: '',
         uid: '',
-        company_id: '',
         state: '',
         start_time: '',
         end_time: ''
@@ -342,7 +269,6 @@ export default {
       state: {},
       state_format: [],
       device_format: [],
-      company_id_format: [],
       temp: null,
       dialogFormVisible: false,
       dialogStatus: '',
@@ -352,19 +278,12 @@ export default {
       },
       dialogPvVisible: false,
       multipleSelection: [],
-      options: [],
-      value: '',
-      loading: false,
-      goods_list: []
     }
   },
   created() {
     this.getSelect();
   },
   methods: {
-    handleSelectionChange(val) {
-      this.multipleSelection = val;
-    },
     getSelect() {
       dictInfo().then(res => {
         this.state = res.data.dict_order_state;
@@ -375,27 +294,6 @@ export default {
         this.state_format = d;
         this.getList()
       });
-    },
-    remoteMethod(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
-          });
-          this.company_id_format = list;
-        });
-      } else {
-        this.company_id_format = [];
-      }
     },
     remoteMethod2(query) {
       if (query !== '') {
@@ -418,148 +316,6 @@ export default {
         this.device_format = [];
       }
     },
-    remoteMethod3(query) {
-      if (query !== '') {
-        this.loading = true;
-        let data = {
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({goods_name: query, company_id: this.temp.company_id})
-        };
-        goodsList(data).then(res => {
-          this.loading = false;
-          let list = [];
-          this.goods_list = res.data.list;
-          res.data.list.forEach(v => {
-            list.push({label: v.goods_name, value: v.sku_id});
-          });
-          this.options = list;
-        });
-      } else {
-        this.options = [];
-      }
-    },
-    addToList() {
-      if (this.value) {
-        this.goods_list.forEach(v => {
-          if (v.sku_id === this.value) {
-            this.temp.goods_details.push(v);
-          }
-        });
-        this.value = '';
-      }
-    },
-    cancelSubmit() {
-      this.opDefault = true;
-      this.repairDefault = false;
-      this.refundDefault = false;
-    },
-    repairSubmit() {
-      this.opDefault = false;
-      this.repairDefault = true;
-      this.refundDefault = false;
-    },
-    refundSubmit() {
-      this.opDefault = false;
-      this.repairDefault = false;
-      this.refundDefault = true;
-    },
-    repairDealSubmit() {
-      let data = {
-        order_no: this.temp.order_no
-      };
-      let arr = [];
-      if (this.multipleSelection.length) {
-        this.multipleSelection.forEach(v => {
-          let has = false;
-          if (arr.length) {
-            arr.forEach(k => {
-              if (k.sku_id == v.sku_id) {
-                has = true;
-                k.num += 1;
-              }
-            });
-            if (has) {
-              arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
-            }
-          } else {
-            arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
-          }
-          
-        });
-        data.repair_info = JSON.stringify(arr);
-      }
-      this.$confirm('是否对该订单进行补扣?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        repairDeal(data).then(res => {
-          this.opDefault = true;
-          this.repairDefault = false;
-          this.refundDefault = false;
-          this.multipleSelection = [];
-          this.$notify({
-            title: '提示',
-            message: '处理成功',
-            type: 'success',
-            duration: 2000
-          })
-          this.handleDetailUpdate(data.order_no);
-        });
-      }).catch(() => {
-        
-      });
-    },
-    refundDealSubmit() {
-      let data = {
-        order_no: this.temp.order_no
-      };
-      let arr = [];
-      if (this.multipleSelection.length) {
-        this.multipleSelection.forEach(v => {
-          let has = false;
-          if (arr.length) {
-            arr.forEach(k => {
-              if (k.sku_id == v.sku_id) {
-                has = true;
-                k.num += 1;
-              }
-            });
-            if (has) {
-              arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
-            }
-          } else {
-            arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
-          }
-          
-        });
-        data.refund_info = JSON.stringify(arr);
-      }
-      this.$confirm('是否对该订单进行退款?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        refundDeal(data).then(res => {
-          this.opDefault = true;
-          this.repairDefault = false;
-          this.refundDefault = false;
-          this.multipleSelection = [];
-          this.$notify({
-            title: '提示',
-            message: '处理成功',
-            type: 'success',
-            duration: 2000
-          });
-          this.handleDetailUpdate(data.order_no);
-        });
-      }).catch(() => {
-          
-      });
-    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
@@ -568,30 +324,6 @@ export default {
         this.listLoading = false;
         this.tableData = res.data.list;
         this.total = res.data.total;
-      });
-    },
-    handleDetailUpdate(order_no) {
-      orderDetails({order_no: order_no}).then(res => {
-        this.order_state = res.data.state;
-        this.temp = res.data;
-        let refund_repair = [];
-        if (res.data.refund) {
-          let list = res.data.refund.goods_details;
-          list.forEach(v => {
-            v.is_rr = '退款';
-            v.create_time = res.data.refund.create_time;
-          });
-          refund_repair = refund_repair.concat(list);
-        }
-        if (res.data.repair) {
-          let list = res.data.repair.goods_details;
-          list.forEach(v => {
-            v.is_rr = '补扣';
-            v.create_time = res.data.repair.create_time;
-          });
-          refund_repair = refund_repair.concat(list);
-        }
-        this.temp.refund_repair = refund_repair;
       });
     },
     handleDetail(row) {
@@ -634,7 +366,6 @@ export default {
         device_code: '',
         order_no: '',
         uid: '',
-        company_id: '',
         state: '',
         start_time: '',
         end_time: ''

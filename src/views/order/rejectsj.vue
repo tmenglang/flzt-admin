@@ -22,22 +22,6 @@
             </el-select>
             <el-input v-model="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
             <el-input v-model="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-            <el-select
-              style="width: 200px"
-              v-model="searchQuery.company_id"
-              filterable
-              remote
-              reserve-keyword
-              placeholder="请输入商家名称"
-              :remote-method="remoteMethod"
-              :loading="selectLoading">
-              <el-option
-                v-for="item in company_id_format"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value">
-              </el-option>
-            </el-select>
             <el-select v-model="searchQuery.state" clearable style="width: 150px" class="filter-item" placeholder="请选择订单状态">
               <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
@@ -81,10 +65,6 @@
       <el-table-column
         prop="order_title" 
         label="订单信息">
-      </el-table-column>
-      <el-table-column
-        prop="company_name" 
-        label="商家名称">
       </el-table-column>
       <el-table-column
         prop="device_code" 
@@ -285,11 +265,10 @@
 
 <script>
 import { rejectList, rejectDetails, rejectDeal } from '@/api/order'
-import { merchantList } from '@/api/merchant'
 import { deviceList } from '@/api/device'
 import Pagination from '@/components/Pagination'
 export default {
-  name: 'Reject',
+  name: 'RejectSJ',
   components: { Pagination },
   data() {
     return {
@@ -310,7 +289,6 @@ export default {
         device_code: '',
         order_no: '',
         uid: '',
-        company_id: '',
         state: '',
         start_time: '',
         end_time: ''
@@ -328,7 +306,6 @@ export default {
       refund_state_format: [{label: '未退款', value: 0}, {label: '已退款', value: 1}],
       order_state: ["未完成", "已支付", "退款中", "已退款"],
       device_format: [],
-      company_id_format: [],
       temp: null,
       dialogFormVisible: false,
       dialogStatus: '',
@@ -344,54 +321,6 @@ export default {
     this.getList();
   },
   methods: {
-    getSelect() {
-      merchantList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let list = [];
-        res.data.list.forEach(v => {
-          list.push({label: v.company_name, value: v.company_id});
-        });
-        this.company_id_format = list;
-        deviceList({
-          page_size: 100,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc'
-        }).then(res2 => {
-          let list2 = [];
-          res2.data.list.forEach(v => {
-            list2.push({label: v.device_name, value: v.device_code});
-          });
-          this.device_format = list2;
-          this.getList()
-        });
-      });
-    },
-    remoteMethod(query) {
-      if (query !== '') {
-        this.selectLoading = true;
-        merchantList({
-          page_size: 10,
-          page_index: 1,
-          order_by: '',
-          order_type: 'desc',
-          search: JSON.stringify({company_name: query})
-        }).then(res => {
-          this.selectLoading = false;
-          let list = [];
-          res.data.list.forEach(v => {
-            list.push({label: v.company_name, value: v.id});
-          });
-          this.company_id_format = list;
-        });
-      } else {
-        this.company_id_format = [];
-      }
-    },
     remoteMethod2(query) {
       if (query !== '') {
         this.selectLoading = true;
@@ -442,7 +371,6 @@ export default {
         device_code: '',
         order_no: '',
         uid: '',
-        company_id: '',
         state: '',
         start_time: '',
         end_time: ''

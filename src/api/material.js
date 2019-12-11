@@ -27,3 +27,24 @@ export function adUpdate(data) {
     data
   })
 }
+
+export function adMaterial(data) {
+  return request({
+    url: '/ad/material',
+    data
+  })
+}
+
+export function adDetails(data) {
+  return request({
+    url: '/ad/details',
+    data
+  })
+}
+
+export function dictInfo(data) {
+  return request({
+    url: '/dict/info',
+    data
+  })
+}

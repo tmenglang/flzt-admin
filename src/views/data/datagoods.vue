@@ -63,6 +63,7 @@
     <el-table
       :data="tableData"
       border  
+      @sort-change="changeSort"
       v-loading="listLoading" 
       style="width: 100%; margin-top: 20px;">
       <el-table-column
@@ -89,19 +90,39 @@
       </el-table-column>
       <el-table-column
         prop="goods_num" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
         label="销售量">
       </el-table-column>
       <el-table-column
         prop="cost" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
         label="成本">
       </el-table-column>
       <el-table-column
         prop="sale" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
         label="销售额">
       </el-table-column>
       <el-table-column
         prop="profit" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
         label="毛利">
+      </el-table-column>
+      <el-table-column
+        prop="discount" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="优惠金额">
+      </el-table-column>
+      <el-table-column
+        prop="payment" 
+        sortable
+        :sort-orders="['ascending', 'descending', null]"
+        label="实际金额">
       </el-table-column>
     </el-table>
     <div class="pages-wrap">
@@ -147,40 +168,24 @@ export default {
     this.getList();
   },
   methods: {
-    getSelect() {
-      this.listLoading = true;
-      merchantList({
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      }).then(res => {
-        let d = [];
-        res.data.list.forEach(v => {
-          d.push({label: v.company_name, value: v.id});
-        });
-        this.company_format = d;
-        this.getDevice();
-      });
-    },
-    getDevice() {
-      let params = {
-        page_size: 100,
-        page_index: 1,
-        order_by: '',
-        order_type: 'desc'
-      };
-      if (this.searchQuery.company_id !== '') {
-        params.search = JSON.stringify({company_id: this.searchQuery.company_id});
-      };
-      deviceList(params).then(res => {
-        let d = [];
-        res.data.list.forEach(v => {
-          d.push({label: v.device_name, value: v.device_code});
-        });
-        this.device_format = d;
-        this.getList();
-      });
+    // 从后台获取数据,重新排序
+    changeSort (val) {
+      console.log(val) // column: {…} order: "ascending" prop: "date"
+      switch (val.order) {
+        case 'ascending':
+          this.listQuery.order_by = val.prop;
+          this.listQuery.order_type = 'asc';
+          break;
+        case 'descending':
+          this.listQuery.order_by = val.prop;
+          this.listQuery.order_type = 'desc';
+          break;
+        default:
+          this.listQuery.order_by = '';
+          this.listQuery.order_type = 'desc';
+      }
+      this.listQuery.page_index = 1;
+      this.getList();
     },
     getList() {
       this.listLoading = true;
