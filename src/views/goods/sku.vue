@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="searchQuery.name" placeholder="商品名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.name" placeholder="商品名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       
       <el-select v-model="searchQuery.device_type" placeholder="设备类型" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
@@ -123,7 +123,7 @@
         </el-form-item>
         <el-form-item label="商品图片">
           <el-upload
-            action="https://testportal.fsylit.com/file/upload"
+            :action="uplink"
             list-type="picture-card" 
             :on-preview="handlePictureCardPreview"
             :on-success="handlePicSuccess" 
@@ -206,6 +206,8 @@ export default {
   components: { Pagination },
   data() {
     return {
+      // uplink: 'https://portal.fsylit.com/file/upload',
+      uplink: 'https://testportal.fsylit.com/file/upload',
       btnLoading: false,
       tableData: [],
       tableKey: 0,

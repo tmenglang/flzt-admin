@@ -17,7 +17,7 @@
           :value="item.value">
         </el-option>
       </el-select>
-      <el-input v-model="searchQuery.manage_user" placeholder="理货员" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.manage_user" placeholder="理货员" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-date-picker
         style="width: 150px" 
         class="vm" 
@@ -354,8 +354,8 @@ export default {
     margin: 10px 0;
   }
   .image-size {
-    width: 120px;
-    height: 90px;
+    width: 200px;
+    height: 150px;
   }
   .image-slot {
     display: flex;

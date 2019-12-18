@@ -1,7 +1,22 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.device_code" placeholder="货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-select
+        style="width: 200px"
+        v-model="searchQuery.device_code"
+        filterable
+        remote
+        reserve-keyword
+        placeholder="请输入货柜名称"
+        :remote-method="remoteMethod3"
+        :loading="selectLoading">
+        <el-option
+          v-for="item in device_format"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value">
+        </el-option>
+      </el-select>
       <el-select v-model="searchQuery.error_type" placeholder="请选择故障类型" clearable style="width: 150px" class="filter-item">
         <el-option v-for="item in error_type_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
@@ -39,11 +54,11 @@
       style="width: 100%; margin-top: 20px;">
       <el-table-column
         prop="device_code" 
-        label="设备号">
+        label="货柜编号">
       </el-table-column>
       <el-table-column
         prop="device_name" 
-        label="设备名称">
+        label="货柜名称">
       </el-table-column>
       <el-table-column
         prop="create_time" 
@@ -69,7 +84,7 @@
 </template>
 
 <script>
-import { deviceError } from '@/api/device'
+import { deviceList, deviceError } from '@/api/device'
 import { dictInfo } from '@/api/material'
 import Pagination from '@/components/Pagination'
 export default {
@@ -95,6 +110,8 @@ export default {
         start_time: '',
         end_time: ''
       },
+      selectLoading: false,
+      device_format: [],
       error_type: {},
       error_type_format: []
     }
@@ -127,6 +144,27 @@ export default {
         this.tableData = res.data.list;
         this.total = res.data.total;
       });
+    },
+    remoteMethod3(query) {
+      if (query !== '') {
+        this.selectLoading = true;
+        deviceList({
+          page_size: 10,
+          page_index: 1,
+          order_by: '',
+          order_type: 'desc',
+          search: JSON.stringify({device_name: query})
+        }).then(res => {
+          this.selectLoading = false;
+          let list = [];
+          res.data.list.forEach(v => {
+            list.push({label: v.device_name, value: v.device_code});
+          });
+          this.device_format = list;
+        });
+      } else {
+        this.device_format = [];
+      }
     },
     handleFilter() {
       this.listQuery.page_index = 1

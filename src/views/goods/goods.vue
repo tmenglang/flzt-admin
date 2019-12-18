@@ -1,10 +1,10 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.sku_id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.sku_id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <!-- <el-input v-model="searchQuery.bar_code" placeholder="条形码" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" /> -->
-      <el-input v-model="searchQuery.goods_name" placeholder="商品名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="searchQuery.create_operator" placeholder="添加人" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.goods_name" placeholder="商品名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.create_operator" placeholder="添加人" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="searchQuery.device_type" placeholder="设备类型" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>

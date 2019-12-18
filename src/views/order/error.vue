@@ -20,8 +20,8 @@
                 :value="item.value">
               </el-option>
             </el-select>
-            <el-input v-model="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-            <el-input v-model="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-input v-model.trim="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-input v-model.trim="searchQuery.phone" placeholder="手机号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
             <el-select
               style="width: 200px"
               v-model="searchQuery.company_id"
@@ -100,6 +100,10 @@
       <el-table-column
         prop="uid" 
         label="用户id">
+      </el-table-column>
+      <el-table-column
+        prop="phone" 
+        label="手机号">
       </el-table-column>
       <el-table-column
         prop="create_time" 
@@ -223,6 +227,10 @@
         您的浏览器不支持 video 标签。
         </video>
       </div>
+      <h3>识别结果</h3>
+      <el-row>
+        <el-col :span="24"><div class="lh30">{{temp ? temp.ai_result_str : ''}}</div></el-col>
+      </el-row>
       <el-row style="margin: 10px 0;">
         <el-col :span="12"><h3>关联商品</h3></el-col>
         <el-col :span="12" style="text-align: right;" v-if="temp && temp.state == 0">
@@ -292,7 +300,8 @@ export default {
       searchQuery: {
         device_code: '',
         order_no: '',
-        uid: '',
+        // uid: '',
+        phone: '',
         company_id: '',
         type: '',
         state: '',

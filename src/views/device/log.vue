@@ -1,9 +1,27 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.device_code" placeholder="货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-select
+        style="width: 200px"
+        v-model="searchQuery.device_code"
+        filterable
+        remote
+        reserve-keyword
+        placeholder="请输入货柜名称"
+        :remote-method="remoteMethod3"
+        :loading="selectLoading">
+        <el-option
+          v-for="item in device_format"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value">
+        </el-option>
+      </el-select>
       <el-select v-model="searchQuery.device_state" placeholder="消息状态" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in device_state_format" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+      <el-select v-model="searchQuery.msg_type" placeholder="消息类型" clearable style="width: 120px" class="filter-item">
+        <el-option v-for="item in msg_type_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-date-picker
         style="width: 150px" 
@@ -93,7 +111,8 @@
 </template>
 
 <script>
-import { deviceLog } from '@/api/device'
+import { deviceList, deviceLog } from '@/api/device'
+import { dictInfo } from '@/api/material'
 import Pagination from '@/components/Pagination'
 export default {
   name: 'Log',
@@ -116,6 +135,7 @@ export default {
       searchQuery: {
         device_code: '',
         device_state: '',
+        msg_type: '',
         start_time: '',
         end_time: ''
       },
@@ -123,6 +143,7 @@ export default {
         1: '正常',
         0: '异常'
       },
+      msg_type_format: [],
       device_state_format: [{value: 1, label: '正常'}, {value: 0, label: '异常'}],
       temp: {
         details: {}
@@ -131,13 +152,24 @@ export default {
       dialogStatus: '',
       textMap: {
         update: '日志详情'
-      }
+      },
+      device_format: [],
     }
   },
   created() {
-    this.getList();
+    this.getSelect();
   },
   methods: {
+    getSelect() {
+      dictInfo().then(res => {
+        let d = [];
+        for (let i in res.data.msg_type) {
+          d.push({label: res.data.msg_type[i], value: parseInt(i)});
+        }
+        this.msg_type_format = d;
+        this.getList()
+      });
+    },
     getList() {
       this.listLoading = true;
       let data = this.listQuery;
@@ -147,6 +179,27 @@ export default {
         this.tableData = res.data.list;
         this.total = res.data.total;
       });
+    },
+    remoteMethod3(query) {
+      if (query !== '') {
+        this.selectLoading = true;
+        deviceList({
+          page_size: 10,
+          page_index: 1,
+          order_by: '',
+          order_type: 'desc',
+          search: JSON.stringify({device_name: query})
+        }).then(res => {
+          this.selectLoading = false;
+          let list = [];
+          res.data.list.forEach(v => {
+            list.push({label: v.device_name, value: v.device_code});
+          });
+          this.device_format = list;
+        });
+      } else {
+        this.device_format = [];
+      }
     },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
@@ -168,6 +221,7 @@ export default {
       this.searchQuery = {
         device_code: '',
         device_state: '',
+        msg_type: '',
         start_time: '',
         end_time: ''
       };

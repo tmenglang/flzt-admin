@@ -4,7 +4,22 @@
       <el-row :gutter="24">
         <el-col :span="24">
           <div class="mb10">
-              <el-input v-model="searchQuery.device_code" placeholder="货柜名称/货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+              <el-select
+                style="width: 200px"
+                v-model="searchQuery.device_code"
+                filterable
+                remote
+                reserve-keyword
+                placeholder="请输入货柜名称"
+                :remote-method="remoteMethod3"
+                :loading="selectLoading">
+                <el-option
+                  v-for="item in device_format"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value">
+                </el-option>
+              </el-select>
                 <el-select
                     style="width: 200px"
                     v-model="searchQuery.company_id"
@@ -158,7 +173,7 @@
 </template>
 
 <script>
-import { deviceState, deviceSelect, deviceOperate } from '@/api/device'
+import { deviceList, deviceState, deviceSelect, deviceOperate } from '@/api/device'
 import { merchantList } from '@/api/merchant'
 import Pagination from '@/components/Pagination'
 export default {
@@ -193,6 +208,7 @@ export default {
       device_state: [],
       is_online: [],
       pay_type: [],
+      device_format: [],
       device_model: [],
       device_type_format: [],
       device_state_format: [],
@@ -295,6 +311,27 @@ export default {
         });
       } else {
         this.options = [];
+      }
+    },
+    remoteMethod3(query) {
+      if (query !== '') {
+        this.selectLoading = true;
+        deviceList({
+          page_size: 10,
+          page_index: 1,
+          order_by: '',
+          order_type: 'desc',
+          search: JSON.stringify({device_name: query})
+        }).then(res => {
+          this.selectLoading = false;
+          let list = [];
+          res.data.list.forEach(v => {
+            list.push({label: v.device_name, value: v.device_code});
+          });
+          this.device_format = list;
+        });
+      } else {
+        this.device_format = [];
       }
     },
     getList() {

@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-input v-model="searchQuery.phone" placeholder="手机号号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.phone" placeholder="手机号号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-button class="filter-item" type="primary" @click="handleFilter">
         筛选
       </el-button>
@@ -39,9 +39,6 @@
       <el-table-column
         prop="sex" 
         label="性别">
-        <template slot-scope="scope">
-          <span>{{ sex[scope.row.sex] }}</span>
-        </template>
       </el-table-column>
       <el-table-column
         prop="phone" 

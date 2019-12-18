@@ -20,8 +20,8 @@
                 :value="item.value">
               </el-option>
             </el-select>
-            <el-input v-model="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-            <el-input v-model="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-input v-model.trim="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-input v-model.trim="searchQuery.phone" placeholder="手机号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
             <el-select v-model="searchQuery.state" clearable style="width: 150px" class="filter-item" placeholder="请选择订单状态">
               <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
@@ -82,6 +82,10 @@
       <el-table-column
         prop="uid" 
         label="用户id">
+      </el-table-column>
+      <el-table-column
+        prop="phone" 
+        label="手机号">
       </el-table-column>
       <el-table-column
         prop="create_time" 
@@ -261,7 +265,8 @@ export default {
       searchQuery: {
         device_code: '',
         order_no: '',
-        uid: '',
+        // uid: '',
+        phone: '',
         state: '',
         start_time: '',
         end_time: ''
@@ -365,7 +370,8 @@ export default {
       this.searchQuery = {
         device_code: '',
         order_no: '',
-        uid: '',
+        // uid: '',
+        phone: '',
         state: '',
         start_time: '',
         end_time: ''

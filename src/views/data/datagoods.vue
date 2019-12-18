@@ -1,39 +1,46 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.sku_id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-      <el-select
-        style="width: 200px"
-        v-model="searchQuery.company_id"
-        filterable
-        remote
-        reserve-keyword
-        placeholder="请输入商家名称"
-        :remote-method="remoteMethod"
-        :loading="selectLoading">
-        <el-option
-          v-for="item in company_id_format"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
-      <el-select
-        style="width: 200px"
-        v-model="searchQuery.device_code"
-        filterable
-        remote
-        reserve-keyword
-        placeholder="请输入货柜名称"
-        :remote-method="remoteMethod2"
-        :loading="selectLoading">
-        <el-option
-          v-for="item in device_format"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
+      <el-row :gutter="24">
+        <el-col :span="24">
+          <div class="mb10">
+            <el-input v-model.trim="searchQuery.sku_id" placeholder="SKUID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-select
+              style="width: 200px"
+              v-model="searchQuery.company_id"
+              filterable
+              remote
+              reserve-keyword
+              placeholder="请输入商家名称"
+              :remote-method="remoteMethod"
+              :loading="selectLoading">
+              <el-option
+                v-for="item in company_id_format"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+            <el-select
+              style="width: 200px"
+              v-model="searchQuery.device_code"
+              filterable
+              remote
+              reserve-keyword
+              placeholder="请输入货柜名称"
+              :remote-method="remoteMethod2"
+              :loading="selectLoading">
+              <el-option
+                v-for="item in device_format"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </div>
+        </el-col>
+      </el-row>
+      <el-input v-model.trim="searchQuery.goods_name" placeholder="请输入商品名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-date-picker
         style="width: 150px" 
         class="vm" 
@@ -156,6 +163,7 @@ export default {
       searchQuery: {
         company_id: '',
         device_code: '',
+        goods_name: '',
         sku_id: '',
         start_time: '',
         end_time: ''
@@ -249,6 +257,7 @@ export default {
       this.searchQuery = {
         company_id: '',
         device_code: '',
+        goods_name: '',
         sku_id: '',
         start_time: '',
         end_time: ''
@@ -293,5 +302,8 @@ export default {
   }
   .myDialog h3 {
     margin: 10px 0;
+  }
+  .mb10 {
+    padding-bottom: 10px;
   }
 </style>

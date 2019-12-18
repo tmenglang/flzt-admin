@@ -3,7 +3,7 @@
     <div class="filter-container">
       <el-select
         style="width: 200px"
-        v-model="searchQuery.company_id"
+        v-model.trim="searchQuery.company_id"
         filterable
         remote
         reserve-keyword
@@ -67,11 +67,11 @@
       style="width: 100%; margin-top: 20px;">
       <el-table-column
         prop="device_code" 
-        label="货柜code">
+        label="货柜编号">
       </el-table-column>
       <el-table-column
         prop="device_name" 
-        label="货柜名字">
+        label="货柜名称">
       </el-table-column>
       <el-table-column
         prop="company_name" 

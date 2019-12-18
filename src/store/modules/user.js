@@ -59,6 +59,7 @@ const actions = {
         removeToken()
         resetRouter()
         removeFlash()
+        localStorage.setItem('reflash', '')
         resolve()
       }).catch(error => {
         reject(error)
@@ -90,6 +91,7 @@ const actions = {
       removeToken()
       resetRouter()
       removeFlash()
+      localStorage.setItem('reflash', '')
       resolve()
     })
   }

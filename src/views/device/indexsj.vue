@@ -1,7 +1,22 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.device_name" placeholder="货柜名称/货柜编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-select
+        style="width: 200px"
+        v-model="searchQuery.device_code"
+        filterable
+        remote
+        reserve-keyword
+        placeholder="请输入货柜名称"
+        :remote-method="remoteMethod3"
+        :loading="selectLoading">
+        <el-option
+          v-for="item in device_format"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value">
+        </el-option>
+      </el-select>
       <el-select v-model="searchQuery.device_type" placeholder="货柜类型" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
@@ -83,9 +98,10 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
-            <div style="white-space:nowrap;">
+            <div>
               <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
-              <el-link type="primary" @click="downloadImg(scope.row)">下载二维码</el-link>
+              <el-link type="primary" @click="handleLook(scope.row)">二维码</el-link>
+              <el-link type="primary" @click="downloadImg(scope.row)" style="margin-top: 10px;">下载二维码</el-link>
             </div>
         </template>
       </el-table-column>
@@ -100,12 +116,12 @@
           <el-input v-model="temp.device_name" placeholder="请输入货柜名称" />
         </el-form-item>
         <el-form-item label="设备类型" prop="device_type">
-          <el-select v-model="temp.device_type" class="filter-item" placeholder="请选择">
+          <el-select v-model="temp.device_type" class="filter-item" disabled placeholder="请选择">
             <el-option v-for="item in device_type_format" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="设备型号" prop="device_model">
-          <el-select v-model="temp.device_model" class="filter-item" placeholder="请选择">
+          <el-select v-model="temp.device_model" class="filter-item" disabled placeholder="请选择">
             <el-option v-for="item in device_model_format" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
@@ -148,6 +164,9 @@
             placeholder="结束时间">
           </el-date-picker>
         </el-form-item>
+        <el-form-item label="备注" prop="remarks">
+          <el-input v-model="temp.remarks" :autosize="{ minRows: 2, maxRows: 4}" type="textarea" placeholder="" />
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">
@@ -159,17 +178,17 @@
       </div>
     </el-dialog>
     <el-dialog
-      title="下载二维码"
+      title="设备二维码"
       :visible.sync="centerDialogVisible"
       width="30%"
       center>
       <!-- <div id="qrcode" ref="qrcode"></div> -->
-      <!-- <div id="qrcode"><el-image :src="device_img" style="width: 200px; height: 200px;"></el-image></div> -->
-      <div id="qrcode">{{ device_img }}</div>
-      <span slot="footer" class="dialog-footer">
+      <div id="qrcode" ref="qrcode"><el-image :src="device_img" style="width: 200px; height: 200px;"></el-image></div>
+      <!-- <div id="qrcode">{{ device_img }}</div> -->
+      <!-- <span slot="footer" class="dialog-footer">
         <el-button @click="centerDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="downs">下载</el-button>
-      </span>
+      </span> -->
     </el-dialog>
   </div>
 </template>
@@ -209,6 +228,7 @@ export default {
       device_state: [],
       is_online: [],
       pay_type: [],
+      device_format: [],
       device_model: [],
       device_type_format: [],
       device_state_format: [],
@@ -227,7 +247,8 @@ export default {
         is_online: '',
         pay_type: '',
         use_start_time: '',
-        use_end_time: ''
+        use_end_time: '',
+        remarks: ''
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -314,10 +335,31 @@ export default {
         is_online: '',
         pay_type: '',
         use_start_time: '',
-        use_end_time: ''
+        use_end_time: '',
+        remarks: ''
       }
     },
-    
+    remoteMethod3(query) {
+      if (query !== '') {
+        this.selectLoading = true;
+        deviceList({
+          page_size: 10,
+          page_index: 1,
+          order_by: '',
+          order_type: 'desc',
+          search: JSON.stringify({device_name: query})
+        }).then(res => {
+          this.selectLoading = false;
+          let list = [];
+          res.data.list.forEach(v => {
+            list.push({label: v.device_name, value: v.device_code});
+          });
+          this.device_format = list;
+        });
+      } else {
+        this.device_format = [];
+      }
+    },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.temp.selected = [row.province, row.city, row.area, row.street];
@@ -394,23 +436,16 @@ export default {
         alink.click();
       });
     },
+    handleLook(item) {
+      this.centerDialogVisible = true;
+      let data = {
+        device_code: item.device_code
+      };
+      fileQrcode(data).then(res => {
+        this.device_img = res.split('src="')[1].split('" />')[0];
+      });
+    },
     downloadImg(item) {
-      //this.centerDialogVisible = true;
-      // if (!this.qrcodeObj) {
-      //   setTimeout(() => {
-      //     this.qrcodeObj = new QRCode('qrcode', {
-      //         width: 200, //图像宽度
-      //         height: 200, //图像高度
-      //         colorDark : "#000000", //前景色
-      //         colorLight : "#ffffff", //背景色
-      //         typeNumber:4, 
-      //         correctLevel : QRCode.CorrectLevel.H //容错级别 容错级别有：（1）QRCode.CorrectLevel.L （2）QRCode.CorrectLevel.M （3）QRCode.CorrectLevel.Q （4）QRCode.CorrectLevel.H
-      //     });
-      //     this.qrCode('device_code=' + item.device_code);
-      //   }, 500);
-      // } else {
-      //   this.qrCode('device_code=' + item.device_code);
-      // }
       let data = {
         device_code: item.device_code
       };
@@ -422,12 +457,6 @@ export default {
         alink.click();
       });
     },
-    // qrCode (url) {
-      
-    //     this.qrcodeObj.clear() //清除二维码 
-    //     this.qrcodeObj.makeCode(url) //生成另一个新的二维码
-      
-    // },
     downs() {
       var alink = document.createElement("a");
       alink.href = this.$refs.qrcode.children[1].src;

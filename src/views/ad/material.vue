@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.name" placeholder="素材名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.name" placeholder="素材名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       
       <el-select v-model="searchQuery.type" placeholder="素材类型" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in type_format" :key="item.value" :label="item.label" :value="item.value" />
@@ -110,7 +110,7 @@
             v-if="temp.type == 1"
             class="avatar-uploader"
             accept=".jpg,.jpeg,.png,.bmp,.JPG,.JPEG,.BMP"
-            action="https://testportal.fsylit.com/file/upload"
+            :action="uplink"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload">
@@ -121,7 +121,7 @@
             class="avatar-uploader"
             v-if="temp.type == 2"
             accept=".mp4,.3gp,.wmv,.avi,.mpg,.mpeg,.mov"
-            action="https://testportal.fsylit.com/file/upload"
+            :action="uplink"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
             :before-upload="beforeVideoUpload">
@@ -161,6 +161,8 @@ export default {
   components: { Pagination },
   data() {
     return {
+      // uplink: 'https://portal.fsylit.com/file/upload',
+      uplink: 'https://testportal.fsylit.com/file/upload',
       btnLoading: false,
       tableData: [],
       tableKey: 0,

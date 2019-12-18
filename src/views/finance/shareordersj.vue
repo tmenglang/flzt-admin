@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.id" placeholder="分账号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.id" placeholder="分账号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="searchQuery.state" placeholder="状态" clearable style="width: 150px" class="filter-item">
         <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>

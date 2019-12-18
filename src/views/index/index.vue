@@ -18,6 +18,10 @@ export default {
   },
   
   mounted () {
+    if (!localStorage.getItem('reflash')) {
+      localStorage.setItem('reflash', 1);
+      window.location.reload();
+    }
   },
   methods: {
     

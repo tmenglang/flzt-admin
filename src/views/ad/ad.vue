@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.ad_name" placeholder="广告名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.ad_name" placeholder="广告名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="searchQuery.channel" placeholder="投放位置" clearable style="width: 150px" class="filter-item">
         <el-option v-for="item in channel_format" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
@@ -91,12 +91,12 @@
           <div style="white-space:nowrap;" v-if="scope.row.state == 2">
           <el-link type="primary" @click="handleDetail(scope.row)">查看</el-link>
           <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
-          <el-link type="primary" @click="handlestate(scope.row, 3)">下线</el-link>
+          <el-link type="primary" @click="handleState(scope.row, 3)">下线</el-link>
           </div>
           <div style="white-space:nowrap;" v-if="scope.row.state == 3">
           <el-link type="primary" @click="handleDetail(scope.row)">查看</el-link>
           <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
-          <el-link type="primary" @click="handlestate(scope.row, 2)">下线</el-link>
+          <el-link type="primary" @click="handleState(scope.row, 2)">上线</el-link>
           <el-link type="primary" @click="handleState(scope.row, -1)">删除</el-link>
           </div>
         </template>
@@ -263,7 +263,8 @@ export default {
         channel: [{ required: true, message: '请选择渠道', trigger: 'change' }],
         start_time_arr: [{ required: true, message: '请选择投放时间', trigger: 'blur' }],
         pic_show_time: [{ required: true, message: '请输入时间间隔', trigger: 'blur' }]
-      }
+      },
+      isOpened: false
     }
   },
   created() {
@@ -276,9 +277,9 @@ export default {
         this.state = res.data.ad_state;
         let p = [];
         let m = [];
-        res.data.ad_state.forEach((v, k) => {
-          p.push({label: v, value: k});
-        });
+        for (var i in res.data.ad_state) {
+          p.push({label: res.data.ad_state[i], value: parseInt(i)})
+        }
         for (let i in res.data.ad_channel) {
           m.push({label: res.data.ad_channel[i], value: parseInt(i)});
         }
@@ -343,7 +344,6 @@ export default {
     },
     cancelUpdate() {
       this.dialogFormVisible = false;
-      this.resetTemp();
     },
     resetTemp() {
       this.temp = {
@@ -358,13 +358,18 @@ export default {
       this.toggleSelection();
     },
     handleCreate() {
+      if (this.isOpened) {
+        this.resetTemp();
+      } else {
+        this.isOpened = true;
+      }
       this.dialogStatus = 'create'
-      this.dialogFormVisible = true
+      this.dialogFormVisible = true;
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
     },
-    createData(updata) {
+    createData(update) {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           //this.temp.id = '' // mock a id
@@ -391,7 +396,7 @@ export default {
             material_ids: this.temp.material_ids_arr.join(','),
             device_codes: this.temp.device_codes_arr.join(',')
           };
-          if (updata) {
+          if (update) {
             data.id = this.temp.id;
           }
           this.btnLoading = true;
@@ -405,12 +410,16 @@ export default {
               type: 'success',
               duration: 2000
             });
-            this.resetTemp();
           })
         }
       })
     },
     handleUpdate(row) {
+      if (this.isOpened) {
+        this.resetTemp();
+      } else {
+        this.isOpened = true;
+      }
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {

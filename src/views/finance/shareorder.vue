@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="searchQuery.id" placeholder="分账号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model.trim="searchQuery.id" placeholder="分账号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select
         style="width: 200px"
         v-model="searchQuery.company_id"

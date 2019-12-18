@@ -4,8 +4,8 @@
       <el-row :gutter="24">
         <el-col :span="24">
           <div class="mb10">
-            <el-input v-model="searchQuery.company_name" placeholder="商家名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-            <el-input v-model="searchQuery.create_operator" placeholder="创建人" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-input v-model.trim="searchQuery.company_name" placeholder="商家名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-input v-model.trim="searchQuery.create_operator" placeholder="创建人" style="width: 150px;" class="filter-item" @keyup.enter.native="handleFilter" />
             <el-date-picker
               style="width: 150px" 
               class="vm" 
@@ -121,12 +121,12 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="商家名称" prop="company_name">
-              <el-input v-model="temp.company_name" placeholder="请输入商家名称" />
+              <el-input v-model.trim="temp.company_name" placeholder="请输入商家名称" />
             </el-form-item>
           </el-col>
           <el-col :span="12" class="row-bg">
             <el-form-item label="身份证号" prop="card_id">
-              <el-input v-model="temp.card_id" placeholder="请输入身份证号" />
+              <el-input v-model.trim="temp.card_id" placeholder="请输入身份证号" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -153,7 +153,7 @@
         </el-form-item>
         <el-form-item label="营业执照">
           <el-upload
-            action="https://testportal.fsylit.com/file/upload"
+            :action="uplink"
             list-type="picture-card" 
             :on-preview="handlePictureCardPreview"
             :on-success="handlePicSuccess" 
@@ -169,7 +169,7 @@
         <el-form-item label="商家logo">
           <el-upload
             class="avatar-uploader"
-            action="https://testportal.fsylit.com/file/upload"
+            :action="uplink"
             accept=".jpg,.jpeg,.png,.bmp,.JPG,.JPEG,.BMP" 
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
@@ -205,7 +205,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="备注">
+        <el-form-item label="备注" prop="remarks">
           <el-input v-model="temp.remarks" :autosize="{ minRows: 2, maxRows: 4}" type="textarea" placeholder="" />
         </el-form-item>
         <el-divider content-position="left">财务信息</el-divider>
@@ -316,7 +316,50 @@ export default {
   name: 'MerchantIndex',
   components: { Pagination },
   data() {
+    var validatePhone = (rule, value, callback) => {
+      if (value) {
+        var regx = /^1[345789]\d{9}$/;
+        if (!regx.test(value)) {
+          callback(new Error("请输入正确手机号!"));
+        } else {
+          callback();
+        }
+      }
+    };
+    var validateCard = (rule, value, callback) => {
+      if (value) {
+        var regx = /^[1-9]\d{5}(18|19|20|(3\d))\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/;
+        if (!regx.test(value)) {
+          callback(new Error("请输入正确的身份证号码!"));
+        } else {
+          callback();
+        }
+      }
+    };
+    var validateTel = (rule, value, callback) => {
+      if (value) {
+        var regx = /0\d{2,3}-\d{7,8}/;
+        if (!regx.test(value)) {
+          callback(new Error("请输入正确的客服电话!"));
+        } else {
+          callback();
+        }
+      }
+    };
+    var validateNum = (rule, value, callback) => {
+      if (value) {
+        var regx = /^(0|[1-9][0-9]*)(\.\d+)?$/;
+        if (!regx.test(value)) {
+          callback(new Error("请输入正确的数字！"));
+        } else {
+          callback();
+        }
+      }
+    };
+    
     return {
+      // uplink: 'https://portal.fsylit.com/file/upload',
+      uplink: 'https://testportal.fsylit.com/file/upload',
       btnLoading: false,
       tableData: [],
       tableKey: 0,
@@ -383,6 +426,7 @@ export default {
         state: '',
         link_user: '',
         remarks: '',
+        card_id: '',
         type: '',
         trade: '',
         identity_pic1: '',
@@ -412,7 +456,12 @@ export default {
       dialogPvVisible: false,
       rules: {
         state: [{ required: true, message: '请选择商家状态', trigger: 'change' }],
-        company_name: [{ required: true, message: '请输入商家名称', trigger: 'blur' }]
+        company_name: [{ required: true, message: '请输入商家名称', trigger: 'blur' }],
+        phone: [{ validator: validatePhone, trigger: ['blur', 'change'] }],
+        link_email: [{ type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }],
+        card_id: [{validator: validateCard, trigger: ['blur', 'change']}],
+        service_tel: [{validator: validateTel, trigger: ['blur', 'change']}],
+        ratio: [{validator: validateNum, trigger: ['blur', 'change']}]
       },
       imageUrl: '',
       dialogImageUrl: '',
@@ -450,6 +499,7 @@ export default {
         remarks: '',
         type: '',
         trade: '',
+        card_id: '',
         identity_pic1: '',
         identity_pic2: '',
         logo_pic: '',
@@ -528,6 +578,7 @@ export default {
             addr: this.temp.addr,
             state: this.temp.state,
             link_user: this.temp.link_user,
+            card_id: this.temp.card_id,
             remarks: this.temp.remarks,
             type: this.temp.type,
             trade: this.temp.trade,

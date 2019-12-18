@@ -51,11 +51,11 @@
       style="width: 100%; margin-top: 20px;">
       <el-table-column
         prop="device_code" 
-        label="货柜code">
+        label="货柜编号">
       </el-table-column>
       <el-table-column
         prop="device_name" 
-        label="货柜名字">
+        label="货柜名称">
       </el-table-column>
       <el-table-column
         prop="person_price" 

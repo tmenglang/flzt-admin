@@ -20,8 +20,8 @@
                 :value="item.value">
               </el-option>
             </el-select>
-            <el-input v-model="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
-            <el-input v-model="searchQuery.uid" placeholder="用户ID" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-input v-model.trim="searchQuery.order_no" placeholder="订单号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+            <el-input v-model.trim="searchQuery.phone" placeholder="手机号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
             <el-select
               style="width: 200px"
               v-model="searchQuery.company_id"
@@ -38,11 +38,11 @@
                 :value="item.value">
               </el-option>
             </el-select>
+          </div>
+          <div>
             <el-select v-model="searchQuery.state" clearable style="width: 150px" class="filter-item" placeholder="请选择订单状态">
               <el-option v-for="item in state_format" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
-          </div>
-          <div>
             <el-date-picker
               style="width: 200px" 
               class="vm" 
@@ -102,6 +102,10 @@
       <el-table-column
         prop="uid" 
         label="用户id">
+      </el-table-column>
+      <el-table-column
+        prop="phone" 
+        label="手机号">
       </el-table-column>
       <el-table-column
         prop="create_time" 
@@ -227,6 +231,10 @@
         您的浏览器不支持 video 标签。
         </video>
       </div>
+      <h3>识别结果</h3>
+      <el-row>
+        <el-col :span="24"><div class="lh30">{{temp ? temp.ai_result_str : ''}}</div></el-col>
+      </el-row>
       <h3 v-if="temp && temp.refund_repair.length">订单关联操作</h3>
       <el-table v-if="temp && temp.refund_repair.length" border :data="temp ? temp.refund_repair : []">
         <el-table-column property="create_time" label="操作时间"></el-table-column>
@@ -333,7 +341,8 @@ export default {
       searchQuery: {
         device_code: '',
         order_no: '',
-        uid: '',
+        // uid: '',
+        phone: '',
         company_id: '',
         state: '',
         start_time: '',
@@ -633,7 +642,8 @@ export default {
       this.searchQuery = {
         device_code: '',
         order_no: '',
-        uid: '',
+        // uid: '',
+        phone: '',
         company_id: '',
         state: '',
         start_time: '',
