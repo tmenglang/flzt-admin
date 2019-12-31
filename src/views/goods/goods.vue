@@ -78,7 +78,7 @@
         prop="create_time" 
         label="添加时间">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
             <div style="white-space:nowrap;">
               <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
@@ -95,7 +95,7 @@
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="100px" style="width: 80%; margin-left:50px;">
         <el-row>
           <el-col :span="6">
-            <div class="grid-content"><img :src="temp.pic_url" width="100" height="100"></div>
+            <div class="grid-content"><img :src="temp.pic1" width="100" height="100"></div>
           </el-col>
           <el-col :span="18">
             <div class="grid-content">

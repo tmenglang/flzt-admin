@@ -1,5 +1,5 @@
 import { login, logout, userMenu } from '@/api/user'
-import { getToken, setToken, removeToken, getUserName, getAvatar, getAccount, setRouter, getRouter, setFlash, removeFlash } from '@/utils/auth'
+import { getToken, setToken, removeToken, getUserName, getAvatar, getAccount, getCompany, setRouter, getRouter, setFlash, removeFlash } from '@/utils/auth'
 import { resetRouter } from '@/router'
 // import router from '../../router'
 
@@ -8,6 +8,7 @@ const state = {
   name: getUserName(),
   avatar: getAvatar(),
   account: getAccount(),
+  company_id: getCompany(),
   rout: getRouter()
 }
 
@@ -20,6 +21,9 @@ const mutations = {
   },
   SET_AVATAR: (state, avatar) => {
     state.avatar = avatar
+  },
+  SET_COMPANY: (state, company_id) => {
+    state.company = company_id
   },
   SET_ACOUNT: (state, account) => {
     state.account = account
@@ -41,6 +45,7 @@ const actions = {
         commit('SET_NAME', data.user_name)
         commit('SET_ACOUNT', data.account)
         commit('SET_AVATAR', data.avatar)
+        commit('SET_COMPANY', data.company_id)
         setToken(data)
         setFlash(1)
         resolve()
@@ -69,14 +74,10 @@ const actions = {
 
   menu({ commit }) {
     return new Promise((resolve, reject) => {
-      userMenu({system: 1}).then(res => { //总后台
-      // userMenu({system: 2}).then(res => { //商家后台
-        // let routes = recursionRouter(res.data, changeRouter);
-        // let newMenu = constantRoutes.concat(routes);
+      // userMenu({system: 1}).then(res => { //总后台
+      userMenu({system: 2}).then(res => { //商家后台
         commit('SET_ROUTER', JSON.stringify(res.data));
         setRouter(JSON.stringify(res.data));
-        // router.options.routes = newMenu;
-        // router.addRoutes(newMenu);
         resolve(res.data)
       }).catch(error => {
         reject(error)

@@ -112,6 +112,10 @@
         label="创建时间">
       </el-table-column>
       <el-table-column
+        prop="payback_time" 
+        label="支付/扣款时间">
+      </el-table-column>
+      <el-table-column
         prop="goods_num" 
         label="商品数量">
       </el-table-column>
@@ -126,7 +130,7 @@
           <span>{{ state[scope.row.state] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
             <div style="white-space:nowrap;">
               <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
@@ -138,7 +142,7 @@
       <pagination class="fr" v-show="total>0" :total="total" :page.sync="listQuery.page_index" :limit.sync="listQuery.page_size" @pagination="getList" />
     </div>
 
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="1000px" custom-class="myDialog" :before-close="closeDialog">
       <h3>订单信息</h3>
       <el-row>
         <el-col :span="8"><div class="lh30">订单号：{{temp ? temp.order_no : ''}}</div></el-col>
@@ -454,11 +458,20 @@ export default {
       if (this.value) {
         this.goods_list.forEach(v => {
           if (v.sku_id === this.value) {
-            this.temp.goods_details.push(v);
+            let obj = Object.assign({}, v);
+            obj.id = this.temp.goods_details.length;
+            obj.num = 1;
+            this.temp.goods_details.push(obj);
           }
         });
         this.value = '';
       }
+    },
+    closeDialog(done) {
+      done();
+      this.opDefault = true;
+      this.repairDefault = false;
+      this.refundDefault = false;
     },
     cancelSubmit() {
       this.opDefault = true;
@@ -490,7 +503,7 @@ export default {
                 k.num += 1;
               }
             });
-            if (has) {
+            if (!has) {
               arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
             }
           } else {
@@ -537,7 +550,7 @@ export default {
                 k.num += 1;
               }
             });
-            if (has) {
+            if (!has) {
               arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
             }
           } else {
@@ -582,6 +595,11 @@ export default {
     handleDetailUpdate(order_no) {
       orderDetails({order_no: order_no}).then(res => {
         this.order_state = res.data.state;
+        if (res.data.goods_details.length) {
+          res.data.goods_details.forEach((v, i) => {
+            v.id = i;
+          });
+        }
         this.temp = res.data;
         let refund_repair = [];
         if (res.data.refund) {
@@ -610,6 +628,11 @@ export default {
         this.order_state = res.data.state;
         if (this.order_state == 1) {
           this.opDefault = true;
+        }
+        if (res.data.goods_details.length) {
+          res.data.goods_details.forEach((v, i) => {
+            v.id = i;
+          });
         }
         this.temp = res.data;
         let refund_repair = [];

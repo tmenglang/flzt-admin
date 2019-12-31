@@ -122,16 +122,16 @@
         prop="reject_money" 
         label="申请金额">
       </el-table-column>
-      <el-table-column
+      <!-- <el-table-column
         prop="refund_state" 
         label="退款状态">
         <template slot-scope="scope">
           <span>{{ refund_state[scope.row.refund_state] }}</span>
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column
         prop="state" 
-        label="处理状态">
+        label="退款状态">
         <template slot-scope="scope">
           <span>{{ state[scope.row.state] }}</span>
         </template>
@@ -144,7 +144,7 @@
         prop="op_time" 
         label="操作时间">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
             <div style="white-space:nowrap;">
               <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
@@ -328,10 +328,10 @@ export default {
       },
       state: {
         0: '未处理',
-        1: '已退款',
+        1: '已处理',
         2: '已驳回'
       },
-      state_format: [{label: '未处理', value: 0}, {label: '已退款', value: 1}, {label: '已驳回', value: 2}],
+      state_format: [{label: '未处理', value: 0}, {label: '已处理', value: 1}, {label: '已驳回', value: 2}],
       refund_state: {
         0: '未退款',
         1: '已退款'
@@ -488,13 +488,12 @@ export default {
                   k.num += 1;
                 }
               });
-              if (has) {
+              if (!has) {
                 arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
               }
             } else {
               arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
             }
-            
           });
         }
         data.refund_info = JSON.stringify(arr);

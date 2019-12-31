@@ -131,8 +131,8 @@
         prop="operate_time" 
         label="处理时间">
       </el-table-column>
-      <el-table-column label="操作">
-        <template slot-scope="scope">
+      <el-table-column label="操作" fixed="right">
+        <template slot-scope="scope" fixed="right">
           <div style="white-space:nowrap;">
             <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
           </div>
@@ -257,15 +257,16 @@
         <el-table-column type="selection" width="55" v-if="temp && temp.state == 0"></el-table-column>
         <el-table-column property="sku_id" label="SKUID"></el-table-column>
         <el-table-column property="goods_name" label="商品名称"></el-table-column>
+        <el-table-column property="num" label="数量"></el-table-column>
         <el-table-column property="cost" label="成本"></el-table-column>
         <el-table-column property="price" label="价格"></el-table-column>
       </el-table>
 
       <div slot="footer" class="dialog-footer" v-if="temp && temp.state == 0">
-        <el-button :loading="btnLoading" @click="closeDeal()">
+        <el-button @click="closeDeal()">
           关闭该单
         </el-button>
-        <el-button type="primary" :loading="btnLoading" @click="dealData()">
+        <el-button type="primary" @click="dealData()">
           确认扣款
         </el-button>
       </div>
@@ -518,20 +519,37 @@ export default {
         operation_id: this.temp.operation_id
       };
       let arr = [];
+      // if (this.multipleSelection.length) {
+      //   this.multipleSelection.forEach(v => {
+      //     arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+      //   });
+      // }
       if (this.multipleSelection.length) {
         this.multipleSelection.forEach(v => {
-          arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+          let has = false;
+          if (arr.length) {
+            arr.forEach(k => {
+              if (k.sku_id == v.sku_id) {
+                has = true;
+                k.num += 1;
+              }
+            });
+            if (!has) {
+              arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+            }
+          } else {
+            arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+          }
+          
         });
       }
       data.deal_result = JSON.stringify(arr);
-      this.btnLoading = true;
       this.$confirm('是否对该异常订单进行扣款?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
         abnormalDeal(data).then(res => {
-          this.btnLoading = false;
           this.getList();
           this.dialogFormVisible = false
           this.$notify({
@@ -549,7 +567,10 @@ export default {
       if (this.value) {
         this.goods_list.forEach(v => {
           if (v.sku_id === this.value) {
-            this.temp.detect_info.push(v);
+            let obj = Object.assign({}, v);
+            obj.id = this.temp.detect_info.length;
+            obj.num = 1;
+            this.temp.detect_info.push(obj);
           }
         });
         this.value = '';

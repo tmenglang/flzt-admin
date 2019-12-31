@@ -1,8 +1,8 @@
 module.exports = {
 
-  title: '商家总后台', //总后台
+  // title: '商家总后台', //总后台
 
-  // title: '商家管理后台', //商家后台
+  title: '商家管理后台', //商家后台
 
   /**
    * @type {boolean} true | false

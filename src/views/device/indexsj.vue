@@ -96,7 +96,7 @@
         prop="create_time" 
         label="创建时间">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
             <div>
               <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
@@ -386,7 +386,8 @@ export default {
             area: this.temp.selected[2],
             street: this.temp.selected[3],
             use_start_time: this.temp.use_start_time,
-            use_end_time: this.temp.use_end_time
+            use_end_time: this.temp.use_end_time,
+            remarks: this.temp.remarks
           }
           this.btnLoading = true;
           updateDevice(tempData).then(() => {

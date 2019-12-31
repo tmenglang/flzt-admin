@@ -67,7 +67,7 @@
           <span>{{ role_obj[scope.row.role_id] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
           <div style="white-space:nowrap;">
             <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>

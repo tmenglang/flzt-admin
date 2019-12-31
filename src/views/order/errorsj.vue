@@ -111,7 +111,7 @@
         prop="operate_time" 
         label="处理时间">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
           <div style="white-space:nowrap;">
             <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>
@@ -228,7 +228,6 @@
           <el-button type="primary" @click="addToList">添加</el-button>
         </el-col>
       </el-row>
-      
       <el-table border :data="temp ? temp.detect_info : []" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" v-if="temp && temp.state == 0"></el-table-column>
         <el-table-column property="sku_id" label="SKUID"></el-table-column>
@@ -443,9 +442,28 @@ export default {
         operation_id: this.temp.operation_id
       };
       let arr = [];
+      // if (this.multipleSelection.length) {
+      //   this.multipleSelection.forEach(v => {
+      //     arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+      //   });
+      // }
       if (this.multipleSelection.length) {
         this.multipleSelection.forEach(v => {
-          arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+          let has = false;
+          if (arr.length) {
+            arr.forEach(k => {
+              if (k.sku_id == v.sku_id) {
+                has = true;
+                k.num += 1;
+              }
+            });
+            if (!has) {
+              arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+            }
+          } else {
+            arr.push({goods_name: v.goods_name, sku_id: v.sku_id, num: 1});
+          }
+          
         });
       }
       data.deal_result = JSON.stringify(arr);
@@ -474,7 +492,10 @@ export default {
       if (this.value) {
         this.goods_list.forEach(v => {
           if (v.sku_id === this.value) {
-            this.temp.detect_info.push(v);
+            let obj = Object.assign({}, v);
+            obj.id = this.temp.detect_info.length;
+            obj.num = 1;
+            this.temp.detect_info.push(obj);
           }
         });
         this.value = '';

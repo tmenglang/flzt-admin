@@ -88,7 +88,7 @@
         prop="company_name" 
         label="所属商家">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
             <div style="white-space:nowrap;">
               <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>

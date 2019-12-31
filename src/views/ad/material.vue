@@ -161,8 +161,8 @@ export default {
   components: { Pagination },
   data() {
     return {
-      // uplink: 'https://portal.fsylit.com/file/upload',
-      uplink: 'https://testportal.fsylit.com/file/upload',
+      uplink: 'https://portal.fsylit.com/file/upload',
+      // uplink: 'https://testportal.fsylit.com/file/upload',
       btnLoading: false,
       tableData: [],
       tableKey: 0,

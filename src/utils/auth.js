@@ -6,6 +6,7 @@ const Avatar = 'avatar'
 const Account = 'account'
 const UserMenu = 'usermenu'
 const Flash = 'flash_state'
+const Company = 'company_id'
 
 export function getToken() {
   return Cookies.get(TokenKey)
@@ -17,6 +18,7 @@ export function setToken(data) {
     Cookies.set(UserName, data.user_name)
     Cookies.set(Avatar, data.avatar)
     Cookies.set(Account, data.account)
+    Cookies.set(Company, data.company_id)
   })()
 }
 
@@ -30,6 +32,7 @@ export function removeToken() {
     Cookies.remove(UserName)
     Cookies.remove(Avatar)
     Cookies.remove(Account)
+    Cookies.remove(Company)
     localStorage.setItem(UserMenu, '')
   })()
 }
@@ -44,6 +47,10 @@ export function getAvatar() {
 
 export function getAccount() {
   return Cookies.get(Account)
+}
+
+export function getCompany() {
+  return Cookies.get(Company)
 }
 
 export function getRouter() {

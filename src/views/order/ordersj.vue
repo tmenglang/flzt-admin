@@ -92,6 +92,10 @@
         label="创建时间">
       </el-table-column>
       <el-table-column
+        prop="payback_time" 
+        label="支付/扣款时间">
+      </el-table-column>
+      <el-table-column
         prop="goods_num" 
         label="商品数量">
       </el-table-column>
@@ -106,7 +110,7 @@
           <span>{{ state[scope.row.state] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
             <div style="white-space:nowrap;">
               <el-link type="primary" @click="handleDetail(scope.row)">详情</el-link>

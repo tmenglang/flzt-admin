@@ -104,7 +104,7 @@
         prop="remarks" 
         label="备注">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
           <div style="white-space:nowrap;">
             <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
@@ -324,6 +324,8 @@ export default {
         } else {
           callback();
         }
+      } else {
+        callback();
       }
     };
     var validateCard = (rule, value, callback) => {
@@ -334,6 +336,8 @@ export default {
         } else {
           callback();
         }
+      } else {
+        callback();
       }
     };
     var validateTel = (rule, value, callback) => {
@@ -344,6 +348,8 @@ export default {
         } else {
           callback();
         }
+      } else {
+        callback();
       }
     };
     var validateNum = (rule, value, callback) => {
@@ -354,12 +360,14 @@ export default {
         } else {
           callback();
         }
+      } else {
+        callback();
       }
     };
     
     return {
-      // uplink: 'https://portal.fsylit.com/file/upload',
-      uplink: 'https://testportal.fsylit.com/file/upload',
+      uplink: 'https://portal.fsylit.com/file/upload',
+      // uplink: 'https://testportal.fsylit.com/file/upload',
       btnLoading: false,
       tableData: [],
       tableKey: 0,
@@ -531,7 +539,9 @@ export default {
     },
     
     createData() {
+      console.log(1);
       this.$refs['dataForm'].validate((valid) => {
+        console.log(valid)
         if (valid) {
           this.btnLoading = true;
           this.temp.id = '' // mock a id

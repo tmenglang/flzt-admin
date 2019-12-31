@@ -156,7 +156,7 @@
         prop="net_info" 
         label="网络信息">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right" width="130">
         <template slot-scope="scope">
             <div style="white-space:nowrap;">
               <el-link type="primary" @click="handleDetail(scope.row)">明细</el-link>

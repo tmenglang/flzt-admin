@@ -56,14 +56,11 @@
         prop="create_time"
         label="创建时间">
         </el-table-column>
-        <el-table-column label="操作">
-        <template slot-scope="scope">
-            <el-button
-                size="mini"
-                @click="handleUpdate(scope.row)">编辑</el-button>
-            <!-- <el-button
-                size="mini"
-                @click="handleDelete(scope.row)">删除</el-button> -->
+        <el-table-column label="操作" fixed="right">
+          <template slot-scope="scope">
+            <div style="white-space:nowrap;">
+              <el-link type="primary" @click="handleUpdate(scope.row)">编辑</el-link>
+            </div>
             </template>
         </el-table-column>
     </el-table>

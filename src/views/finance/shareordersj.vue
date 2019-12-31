@@ -67,7 +67,7 @@
         prop="create_time" 
         label="创建时间">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right">
         <template slot-scope="scope">
             <div style="white-space:nowrap;">
             <el-link type="primary" @click="handleDetail(scope.row)">明细</el-link>

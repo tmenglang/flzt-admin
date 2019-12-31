@@ -81,7 +81,7 @@
         prop="company_name" 
         label="所属商家">
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right" width="180">
         <template slot-scope="scope">
           <div style="white-space:nowrap;" v-if="scope.row.state == 1">
           <el-link type="primary" @click="handleDetail(scope.row)">查看</el-link>

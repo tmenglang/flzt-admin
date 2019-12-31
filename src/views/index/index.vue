@@ -21,6 +21,8 @@ export default {
     if (!localStorage.getItem('reflash')) {
       localStorage.setItem('reflash', 1);
       window.location.reload();
+    } else {
+      this.$router.push({path: '/dashboard' + localStorage.getItem('redirect')});
     }
   },
   methods: {

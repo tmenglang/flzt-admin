@@ -65,21 +65,24 @@ export const changeRouter = [
     name: 'dashboard',
     redirect: '/dashboard',
     meta: { title: '首页', icon: 'dashboard' },
-    children: [{
-      path: 'dashboard',
-      name: 'dashboard',
-      flat: '/dashboard',
-      show: false,
-      component: () => import('@/views/dashboard/index'),
-      meta: { title: '数据总览', affix: false }
-    },{
-      path: 'realtime',
-      flat: '/realtime',
-      name: 'realtime',
-      show: false,
-      component: () => import('@/views/dashboard/realtime'),
-      meta: { title: '实时数据', affix: false }
-    }]
+    children: [
+      {
+        path: 'realtime',
+        flat: '/realtime',
+        name: 'realtime',
+        show: false,
+        component: () => import('@/views/dashboard/realtime'),
+        meta: { title: '实时数据', affix: false }
+      }, 
+      {
+        path: 'dashboard',
+        name: 'dashboard',
+        flat: '/dashboard',
+        show: false,
+        component: () => import('@/views/dashboard/index'),
+        meta: { title: '数据总览', affix: false }
+      }
+    ]
   },
   {
     path: '/merchant',
@@ -384,21 +387,24 @@ export const changeRouterSJ = [
     name: 'dashboard',
     show: false,
     meta: { title: '首页', icon: 'dashboard' },
-    children: [{
-      path: 'dashboard',
-      flat: '/dashboard',
-      show: false,
-      name: 'dashboard',
-      component: () => import('@/views/dashboard/index'),
-      meta: { title: '数据总览', affix: false }
-    },{
-      path: 'realtime',
-      flat: '/realtime',
-      name: 'realtime',
-      show: false,
-      component: () => import('@/views/dashboard/realtime'),
-      meta: { title: '实时数据', affix: false }
-    }]
+    children: [
+      {
+        path: 'realtime',
+        flat: '/realtime',
+        name: 'realtime',
+        show: false,
+        component: () => import('@/views/dashboard/realtime'),
+        meta: { title: '实时数据', affix: false }
+      },
+      {
+        path: 'dashboard',
+        flat: '/dashboard',
+        show: false,
+        name: 'dashboard',
+        component: () => import('@/views/dashboard/index'),
+        meta: { title: '数据总览', affix: false }
+      }
+    ]
   },
   {
     path: '/device',
@@ -613,14 +619,14 @@ export const changeRouterSJ = [
 ]
 export function recursionRouter(userRouter = [], allRouter = []) {
   var realRoutes = []
-  allRouter.forEach(v => {
-    userRouter.forEach(k => {
+  userRouter.forEach(k => {
+    allRouter.forEach(v => {
       if (k.parent_menu === v.meta.title) {
         let r = Object.assign({}, v);
         r.show = true;
         r.children = [];
-        v.children.forEach(l => {
-          k.child_menu.forEach(m => {
+        k.child_menu.forEach(m => {
+          v.children.forEach(l => {
             if (l.flat === m.url) {
               let c = Object.assign({}, l);
               c.show = true;
@@ -651,12 +657,12 @@ function showAllMenu(allRouter = []) {
   return realRoutes
 }
 // 权限控制项，正式情况下放开
-let addRouters = hasMenu ? recursionRouter(JSON.parse(localMenu), changeRouter) : [];  //总后台
-// let addRouters = hasMenu ? recursionRouter(JSON.parse(localMenu), changeRouterSJ) : [];  //商家后台
+// let addRouters = hasMenu ? recursionRouter(JSON.parse(localMenu), changeRouter) : [];  //总后台
+let addRouters = hasMenu ? recursionRouter(JSON.parse(localMenu), changeRouterSJ) : [];  //商家后台
 // 自测用
 // let addRouters = showAllMenu(changeRouter);
-console.log(constantRoutes.concat(changeRouter));
-// console.log(constantRoutes.concat(changeRouterSJ));
+// console.log(constantRoutes.concat(changeRouter));
+console.log(constantRoutes.concat(changeRouterSJ));
 const createRouter = (h) => new Router({
   // mode: 'history', // require service support
   scrollBehavior: () => ({ y: 0 }),
